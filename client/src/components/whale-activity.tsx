@@ -72,12 +72,36 @@ export default function WhaleActivity() {
   ];
   
   const [displayTransactions, setDisplayTransactions] = useState<Transaction[]>(sampleTransactions);
+  const [newTransactionAlert, setNewTransactionAlert] = useState(false);
   
   useEffect(() => {
     if (transactions && Array.isArray(transactions)) {
       setDisplayTransactions(transactions);
     }
   }, [transactions]);
+  
+  // Live transaction simulator
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTransaction: Transaction = {
+        id: Date.now(),
+        type: ["Large Transfer", "Whale Movement", "Exchange Deposit", "Smart Contract"][Math.floor(Math.random() * 4)],
+        fromAddress: `0x${Math.random().toString(16).substr(2, 8)}`,
+        toAddress: `0x${Math.random().toString(16).substr(2, 8)}`,
+        amount: `${(Math.random() * 1000 + 100).toFixed(0)} ${["BTC", "ETH", "SOL", "USDC"][Math.floor(Math.random() * 4)]}`,
+        asset: ["BTC", "ETH", "SOL", "USDC"][Math.floor(Math.random() * 4)],
+        category: ["Exchange Outflow", "Validator Deposit", "DeFi Interaction", "Potential Sell"][Math.floor(Math.random() * 4)],
+        riskScore: Math.floor(Math.random() * 40) + 45,
+        timestamp: new Date().toISOString(),
+      };
+      
+      setDisplayTransactions(prev => [newTransaction, ...prev.slice(0, 3)]); // Keep only 4 transactions
+      setNewTransactionAlert(true);
+      setTimeout(() => setNewTransactionAlert(false), 2000);
+    }, 8000 + Math.random() * 7000); // 8-15 seconds
+    
+    return () => clearInterval(interval);
+  }, []);
   
   function getTimeSince(timestamp: string): string {
     const date = new Date(timestamp);
@@ -116,7 +140,14 @@ export default function WhaleActivity() {
   return (
     <Card className="bg-[#191A2A] border-white/10 h-full">
       <CardHeader className="p-4 border-b border-white/5 flex flex-row items-center justify-between">
-        <h3 className="font-orbitron text-lg">Live Whale Activity</h3>
+        <div className="flex items-center">
+          <h3 className="font-orbitron text-lg">Live Whale Activity</h3>
+          {newTransactionAlert && (
+            <div className="ml-2 animate-bounce">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+            </div>
+          )}
+        </div>
         <Button variant="link" size="sm" className="text-cyan-400 hover:text-cyan-300">
           See All
         </Button>
@@ -145,17 +176,33 @@ export default function WhaleActivity() {
             ))}
           </div>
         ) : (
-          // Transaction list
-          displayTransactions.map((transaction) => (
+          // Live transaction list with pop-up animations
+          displayTransactions.map((transaction, index) => (
             <div 
               key={transaction.id} 
-              className={`bg-white/5 rounded-lg p-3 border-l-2 ${getBorderColor(transaction.category)} transition-all duration-200 hover:scale-[1.02] hover:shadow-lg`}
+              className={`bg-white/5 rounded-lg p-3 border-l-2 ${getBorderColor(transaction.category)} transition-all duration-500 hover:scale-[1.02] hover:shadow-lg transform ${
+                index === 0 ? 'animate-[slideInUp_0.5s_ease-out]' : ''
+              } ${
+                index === 0 && newTransactionAlert ? 'ring-2 ring-cyan-400/50 shadow-cyan-400/25 shadow-lg' : ''
+              }`}
+              style={{
+                animationDelay: `${index * 0.1}s`
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full ${getIconBgColor(transaction.category)} flex items-center justify-center`}>
+                  <div className={`w-8 h-8 rounded-full ${getIconBgColor(transaction.category)} flex items-center justify-center transition-all duration-300 ${
+                    index === 0 && newTransactionAlert ? 'animate-pulse scale-110' : ''
+                  }`}>
                     <i className={`${getIconForType(transaction.type)} ${getIconColor(transaction.category)}`}></i>
                   </div>
+                  {index === 0 && newTransactionAlert && (
+                    <div className="ml-1">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 animate-pulse">
+                        NEW
+                      </span>
+                    </div>
+                  )}
                   <div className="ml-3">
                     <div className="text-sm font-medium">{transaction.type}</div>
                     <div className="text-xs text-gray-400 flex items-center">

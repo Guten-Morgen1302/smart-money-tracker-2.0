@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
 
 type StatCardProps = {
   title: string; 
@@ -21,6 +22,43 @@ function StatCard({
   color,
   count
 }: StatCardProps) {
+  const [isGlowing, setIsGlowing] = useState(false);
+  const [animatedValue, setAnimatedValue] = useState(value);
+  const [animatedLabel, setAnimatedLabel] = useState(labelValue);
+  
+  // Real-time animation effects
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Random glow effect
+      if (Math.random() > 0.8) {
+        setIsGlowing(true);
+        setTimeout(() => setIsGlowing(false), 2000);
+      }
+      
+      // Animate numbers for certain cards
+      if (title === "Tracked Wallets") {
+        const baseNum = 856;
+        const variation = Math.floor(Math.random() * 5) - 2;
+        setAnimatedValue((baseNum + variation).toString());
+      }
+      
+      if (title === "Market Activity" && labelValue.includes("today")) {
+        const match = labelValue.match(/(\d+)/);
+        if (match) {
+          const baseNum = parseInt(match[1]);
+          const variation = Math.floor(Math.random() * 10) - 5;
+          setAnimatedLabel(`+${baseNum + variation} today`);
+        }
+      }
+      
+      if (title === "Custom Alerts" && labelValue.includes("alerts")) {
+        const alerts = Math.floor(Math.random() * 2) + 3; // 3-4 alerts
+        setAnimatedLabel(`${alerts} alerts`);
+      }
+    }, 3000 + Math.random() * 4000); // 3-7 seconds
+    
+    return () => clearInterval(interval);
+  }, [title, labelValue]);
   const colorMap = {
     blue: {
       border: "border-cyan-400/20 hover:border-cyan-400/50",
@@ -45,19 +83,57 @@ function StatCard({
   };
 
   return (
-    <div className={cn("bg-[#191A2A] border rounded-lg p-4 relative overflow-hidden transition-all duration-300", colorMap[color].border)}>
-      <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-full", colorMap[color].bg)}></div>
+    <div className={cn(
+      "bg-[#191A2A] border rounded-lg p-4 relative overflow-hidden transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-2xl",
+      colorMap[color].border,
+      isGlowing && `animate-pulse shadow-2xl ${
+        color === 'blue' ? 'shadow-cyan-400/50 border-cyan-400/60' :
+        color === 'purple' ? 'shadow-purple-500/50 border-purple-500/60' :
+        color === 'green' ? 'shadow-green-400/50 border-green-400/60' :
+        'shadow-pink-500/50 border-pink-500/60'
+      }`
+    )}>
+      {/* Live indicator */}
+      {isGlowing && (
+        <div className="absolute top-2 right-2">
+          <div className={cn(
+            "w-2 h-2 rounded-full animate-ping",
+            color === 'blue' ? 'bg-cyan-400' :
+            color === 'purple' ? 'bg-purple-500' :
+            color === 'green' ? 'bg-green-400' :
+            'bg-pink-500'
+          )}></div>
+        </div>
+      )}
+      
+      <div className={cn("absolute top-0 right-0 w-24 h-24 rounded-bl-full transition-all duration-300", colorMap[color].bg, isGlowing && "animate-pulse")}></div>
       <div className="relative">
         <div className="flex items-center">
           <h3 className="text-gray-400 text-sm">{title}</h3>
-          <span className={cn("ml-auto text-xs px-2 py-0.5 rounded-full", colorMap[color].bg, colorMap[color].text)}>
+          <span className={cn(
+            "ml-auto text-xs px-2 py-0.5 rounded-full transition-all duration-300", 
+            colorMap[color].bg, 
+            colorMap[color].text,
+            isGlowing && "animate-bounce"
+          )}>
             {changeDirection === "up" ? "↑" : changeDirection === "down" ? "↓" : ""} {changePercentage}
           </span>
         </div>
-        <p className="mt-2 text-2xl font-orbitron font-bold">{value}</p>
+        <p className={cn(
+          "mt-2 text-2xl font-orbitron font-bold transition-all duration-300",
+          isGlowing && "scale-105"
+        )}>
+          {animatedValue}
+        </p>
         <div className="mt-3 flex items-center text-xs text-gray-400">
           <span>{label}</span>
-          <span className={cn("ml-auto", colorMap[color].text)}>{labelValue}</span>
+          <span className={cn(
+            "ml-auto transition-all duration-300", 
+            colorMap[color].text,
+            isGlowing && "animate-pulse"
+          )}>
+            {animatedLabel}
+          </span>
         </div>
       </div>
     </div>

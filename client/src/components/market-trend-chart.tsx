@@ -35,6 +35,23 @@ export default function MarketTrendChart() {
     }
   };
   
+  // Generate different data sets for different timeframes
+  const getDataForTimeframe = (coin: string, timeframe: string) => {
+    const baseData = chartData[coin as keyof typeof chartData].data;
+    switch (timeframe) {
+      case '1D':
+        return baseData.slice(-24); // Last 24 hours
+      case '1W':
+        return baseData.slice(-7).map((_, i) => baseData[i * 3 + 10]); // Weekly view
+      case '1M':
+        return Array(30).fill(0).map((_, i) => baseData[0] + Math.random() * 2000 - 1000); // Monthly simulation
+      case '1Y':
+        return Array(12).fill(0).map((_, i) => baseData[0] + Math.random() * 5000 - 2500); // Yearly simulation
+      default:
+        return baseData;
+    }
+  };
+  
   useEffect(() => {
     if (chartRef.current) {
       // Destroy existing chart if it exists
@@ -50,13 +67,15 @@ export default function MarketTrendChart() {
         gradientFill.addColorStop(0, 'rgba(0, 229, 255, 0.3)');
         gradientFill.addColorStop(1, 'rgba(0, 229, 255, 0)');
         
+        const data = getDataForTimeframe(selectedCoin, selectedTimeframe);
+        
         const newChartInstance = new Chart(ctx, {
           type: 'line',
           data: {
-            labels: chartData[selectedCoin as keyof typeof chartData].labels,
+            labels: Array(data.length).fill(''),
             datasets: [{
               label: `${selectedCoin} Price`,
-              data: chartData[selectedCoin as keyof typeof chartData].data,
+              data: data,
               borderColor: '#00E5FF',
               borderWidth: 2,
               pointRadius: 0,
@@ -68,6 +87,10 @@ export default function MarketTrendChart() {
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuart'
+            },
             plugins: {
               legend: {
                 display: false
@@ -111,7 +134,7 @@ export default function MarketTrendChart() {
         setChartInstance(newChartInstance);
       }
     }
-  }, [selectedCoin]);
+  }, [selectedCoin, selectedTimeframe]);
   
   return (
     <Card className="bg-[#191A2A] border-white/10">
