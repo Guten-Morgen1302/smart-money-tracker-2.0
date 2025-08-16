@@ -87,6 +87,30 @@ export default function CryptoTopNews() {
 
   const post = cryptoNews as CryptoNewsPost;
 
+  // Safety check to ensure post data exists
+  if (!post || !post.title || !post.url) {
+    return (
+      <Card className="bg-[#191A2A] border-white/10 hover:border-orange-400/30 transition-all duration-300">
+        <CardHeader className="p-4 border-b border-white/5">
+          <div className="flex items-center space-x-2">
+            <i className="ri-newspaper-line text-orange-400"></i>
+            <h3 className="font-orbitron text-lg">Top Crypto News Today</h3>
+            <Badge className="bg-orange-400/20 text-orange-400 border-orange-400/50">
+              r/cryptocurrency
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <i className="ri-newspaper-line text-4xl text-orange-400/60 mb-3"></i>
+            <p className="text-orange-400 mb-2">News Loading...</p>
+            <p className="text-sm text-gray-400">Fetching latest crypto news</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-[#191A2A] border-white/10 hover:border-orange-400/30 transition-all duration-300">
       <CardHeader className="p-4 border-b border-white/5">
