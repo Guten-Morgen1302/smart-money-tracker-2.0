@@ -324,6 +324,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Crypto News route
+  app.get("/api/crypto-top-today", async (req, res) => {
+    try {
+      const response = await fetch("https://www.reddit.com/r/cryptocurrency/top.json?limit=1&t=day", {
+        headers: {
+          'User-Agent': 'SmartMoneyTracker/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Reddit API error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.data && data.data.children && data.data.children.length > 0) {
+        const post = data.data.children[0].data;
+        
+        res.json({
+          title: post.title,
+          url: `https://reddit.com${post.permalink}`,
+          upvotes: post.ups,
+          created: post.created_utc,
+          author: post.author,
+          subreddit: post.subreddit
+        });
+      } else {
+        res.status(404).json({ message: "No posts found" });
+      }
+    } catch (err: any) {
+      console.error('Crypto news fetch error:', err);
+      res.status(500).json({ 
+        message: "Failed to fetch crypto news",
+        error: err.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

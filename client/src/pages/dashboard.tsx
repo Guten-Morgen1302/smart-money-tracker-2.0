@@ -6,6 +6,7 @@ import MarketTrendChart from "@/components/market-trend-chart";
 import WhaleActivity from "@/components/whale-activity";
 import AIInsights from "@/components/ai-insights";
 import TopWallets from "@/components/top-wallets";
+import CryptoTopNews from "@/components/crypto-top-news";
 
 export default function Dashboard() {
   // Add circuit pattern background effect
@@ -44,6 +45,9 @@ export default function Dashboard() {
               <TopWallets />
             </div>
           </div>
+          
+          {/* Crypto News Section */}
+          <CryptoTopNews />
         </div>
       </main>
     </div>
