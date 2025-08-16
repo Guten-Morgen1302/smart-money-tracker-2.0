@@ -8,6 +8,22 @@ Smart Money Tracker AI is an AI-powered cryptocurrency analytics platform design
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**August 16, 2025**
+- Successfully migrated project from Replit Agent to standard Replit environment
+- Transformed static Whale Tracker into dynamic, interactive experience with:
+  - Live transaction feed with new entries every 5-10 seconds
+  - Smooth animations and transitions throughout the interface
+  - Interactive filter buttons with press animations and loading states
+  - Animated risk score bars that fill from left to right for new transactions
+  - Enhanced action buttons with hover/click feedback effects
+  - Real-time transaction generation with varied data (addresses, amounts, assets)
+  - Professional loading overlays and spinner animations
+  - Entrance animations for new transactions sliding from top
+  - Responsive design maintaining cyberpunk aesthetic
+  - Complete client-server separation following security best practices
+
 ## System Architecture
 
 ### Frontend Architecture
