@@ -1,0 +1,35 @@
+To transform the static "Whale Tracker" UI into a dynamic, interactive, and highly responsive web application. The goal is to provide a seamless and engaging user experience that feels truly "live" and professional.
+
+Core Functionality & Responsiveness:
+
+Interactive Filters & Search: All interactive elements must provide immediate visual feedback.
+
+Value Threshold & Asset Type Filters: When a user clicks any button in the "Value Threshold" or "Asset Type" sections, the selected button should animate to a "pressed" state, such as a slight indent or a subtle glow, and remain visually distinct as the active filter.
+
+Wallet Search: The input field should have a smooth focus animation (e.g., a border highlight). The "Search" button must animate on click. Once clicked, it should transform into a loading spinner that is visually integrated into the button itself, indicating that data is being fetched.
+
+Dynamic Loading Animations:
+
+Any time a filter is applied or a search is executed, the entire "Live Whale Transactions" section should fade to a slightly darker state or overlay with a custom, sleek loading animation (e.g., three pulsing dots or a spinning logo). This provides a clear, high-quality signal that the content is refreshing.
+
+Dynamic "Live Whale Transactions" Section:
+
+Continuous Live Feed: The most critical part of this deliverable is the illusion of a live, unending stream of data.
+
+Every 5-10 seconds, a new, unique transaction must appear at the top of the list. This new entry should not just appear, but should have a graceful entrance animation, such as a subtle slide-down from the top with a brief, eye-catching highlight.
+
+Older transactions should smoothly shift down the list to make room for the new entry, creating a continuous flow.
+
+The transaction details ("From," "To," "Amount," etc.) for each new entry must be programmatically generated and varied to avoid repetition. The "Amount" should be a different number and currency, the addresses should be unique, and the "Time" should reflect the new transaction's arrival.
+
+Individual Card Animations:
+
+"Risk Score": The risk score bar for each transaction should not be static. When a new card appears, the colored bar should animate from left to right, filling up to the final score value (e.g., from 0 to 72 or 86). This animation makes the data feel active and meaningful.
+
+Interactive "Actions" Icons: The icons in the "Actions" column (the eye icon, the bell icon) must be fully interactive. On mouse hover, the icons should have a subtle animation (e.g., a scale-up, a pulse, or a color change) to communicate that they are clickable. On click, a brief animation should play (e.g., a quick flash or ripple effect) to confirm the user's action before a new modal or panel appears to show details.
+
+Final Polish & Pro-Member Features:
+
+Sidebar & User Profile: The sidebar should feel professional. When a user hovers over a menu item, it should highlight with a smooth transition. The "Harsh Patil" Pro Member card at the bottom left should have a subtle, elegant animation, such as a slight breathing glow, to reinforce the "Pro Member" status.
+
+Overall Cohesion: All animations must feel consistent in their style, speed, and timing. There should be a sense of professional polish and attention to detail throughout the entire application.

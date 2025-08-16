@@ -4,35 +4,43 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
+import { createServer } from "http";
+import { setupVite, serveStatic, log } from "./vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+async function startServer() {
+  const app = express();
+  const server = createServer(app);
 
-// Enable CORS
-app.use(cors());
-app.use(express.json());
+  // Enable CORS
+  app.use(cors());
+  app.use(express.json());
 
-// Serve static files (built client assets)
-const staticPath = path.join(__dirname, '../dist/public');
-app.use(express.static(staticPath));
+  // Register API routes first
+  registerRoutes(app);
 
-// Register API routes
-registerRoutes(app);
+  // Development vs Production setup
+  if (process.env.NODE_ENV === 'production') {
+    serveStatic(app);
+  } else {
+    await setupVite(app, server);
+  }
 
-// Serve the React app for all non-API routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(staticPath, 'index.html');
-  res.sendFile(indexPath);
-});
+  // Development server
+  if (process.env.NODE_ENV !== 'production') {
+    const port = parseInt(process.env.PORT || '5000');
+    server.listen(port, '0.0.0.0', () => {
+      log(`serving on port ${port}`);
+    });
+  }
 
-// Development server
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(5000, '0.0.0.0', () => {
-    console.log('[express] serving on port 5000');
-  });
+  return app;
 }
+
+// Start the server
+const app = await startServer();
 
 // Export for Vercel
 export default app;
