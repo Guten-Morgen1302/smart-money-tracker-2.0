@@ -85,8 +85,7 @@ export default function MarketTrendChart() {
             scales: {
               x: {
                 grid: {
-                  display: false,
-                  drawBorder: false
+                  display: false
                 },
                 ticks: {
                   display: false
@@ -95,8 +94,7 @@ export default function MarketTrendChart() {
               y: {
                 position: 'right',
                 grid: {
-                  color: 'rgba(255, 255, 255, 0.05)',
-                  drawBorder: false
+                  color: 'rgba(255, 255, 255, 0.05)'
                 },
                 ticks: {
                   color: 'rgba(255, 255, 255, 0.5)',

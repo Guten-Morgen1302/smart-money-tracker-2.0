@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { formatAddress, getColorForType, getIconForType } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Transaction = {
   id: number;
@@ -74,7 +75,7 @@ export default function WhaleActivity() {
   const [displayTransactions, setDisplayTransactions] = useState<Transaction[]>(sampleTransactions);
   
   useEffect(() => {
-    if (transactions) {
+    if (transactions && Array.isArray(transactions)) {
       setDisplayTransactions(transactions);
     }
   }, [transactions]);
@@ -145,39 +146,125 @@ export default function WhaleActivity() {
             ))}
           </div>
         ) : (
-          // Transaction list
-          displayTransactions.map((transaction) => (
-            <div 
-              key={transaction.id} 
-              className={`bg-white/5 rounded-lg p-3 border-l-2 ${getBorderColor(transaction.category)} ${transaction.id === 1 ? 'animate-pulse-slow' : ''}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full ${getIconBgColor(transaction.category)} flex items-center justify-center`}>
-                    <i className={`${getIconForType(transaction.type)} ${getIconColor(transaction.category)}`}></i>
-                  </div>
-                  <div className="ml-3">
-                    <div className="text-sm font-medium">{transaction.type}</div>
-                    <div className="text-xs text-gray-400 flex items-center">
-                      <span className="truncate w-24">{formatAddress(transaction.fromAddress)}</span>
-                      <i className="ri-arrow-right-line mx-1 text-xs"></i>
-                      <span className="truncate w-24">{formatAddress(transaction.toAddress)}</span>
+          // Transaction list with live ticker animation
+          <AnimatePresence mode="popLayout">
+            {displayTransactions.map((transaction, index) => (
+              <motion.div 
+                key={transaction.id}
+                layout
+                initial={{ 
+                  opacity: 0, 
+                  y: 50, 
+                  scale: 0.95,
+                  x: index === 0 ? -20 : 0 // First item slides in from left slightly
+                }}
+                animate={{ 
+                  opacity: 1, 
+                  y: 0, 
+                  scale: 1,
+                  x: 0
+                }}
+                exit={{ 
+                  opacity: 0, 
+                  y: -30, 
+                  scale: 0.95,
+                  transition: { duration: 0.3 }
+                }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.05,
+                  ease: "easeOut",
+                  layout: { duration: 0.3 }
+                }}
+                whileHover={{
+                  scale: 1.02,
+                  x: 5,
+                  transition: { duration: 0.2 }
+                }}
+                className={`bg-white/5 rounded-lg p-3 border-l-2 ${getBorderColor(transaction.category)} relative overflow-hidden cursor-pointer`}
+              >
+                {/* Live indicator for recent transactions */}
+                {index === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="absolute top-2 right-2"
+                  >
+                    <motion.div
+                      animate={{
+                        scale: [1, 1.2, 1],
+                        opacity: [0.5, 1, 0.5]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                      className={`w-2 h-2 rounded-full ${getIconColor(transaction.category).replace('text-', 'bg-')}`}
+                    />
+                  </motion.div>
+                )}
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <motion.div 
+                      className={`w-8 h-8 rounded-full ${getIconBgColor(transaction.category)} flex items-center justify-center`}
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <i className={`${getIconForType(transaction.type)} ${getIconColor(transaction.category)}`}></i>
+                    </motion.div>
+                    <div className="ml-3">
+                      <motion.div 
+                        className="text-sm font-medium"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.1 }}
+                      >
+                        {transaction.type}
+                      </motion.div>
+                      <motion.div 
+                        className="text-xs text-gray-400 flex items-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <span className="truncate w-24">{formatAddress(transaction.fromAddress)}</span>
+                        <motion.i 
+                          className="ri-arrow-right-line mx-1 text-xs"
+                          animate={{ x: [0, 3, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        />
+                        <span className="truncate w-24">{formatAddress(transaction.toAddress)}</span>
+                      </motion.div>
                     </div>
                   </div>
+                  <motion.div 
+                    className="text-right"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15 }}
+                  >
+                    <div className="text-sm font-orbitron">{transaction.amount}</div>
+                    <div className="text-xs text-gray-400">{getTimeSince(transaction.timestamp)}</div>
+                  </motion.div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-orbitron">{transaction.amount}</div>
-                  <div className="text-xs text-gray-400">{getTimeSince(transaction.timestamp)}</div>
-                </div>
-              </div>
-              <div className="mt-2 text-xs">
-                <span className={`px-2 py-0.5 rounded-full ${getColorForType(transaction.category)}`}>
-                  {transaction.category}
-                </span>
-                <span className="text-gray-400 ml-2">Risk Score: <span className={getIconColor(transaction.category)}>{transaction.riskScore}/100</span></span>
-              </div>
-            </div>
-          ))
+                <motion.div 
+                  className="mt-2 text-xs"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <span className={`px-2 py-0.5 rounded-full ${getColorForType(transaction.category)}`}>
+                    {transaction.category}
+                  </span>
+                  <span className="text-gray-400 ml-2">
+                    Risk Score: <span className={getIconColor(transaction.category)}>{transaction.riskScore}/100</span>
+                  </span>
+                </motion.div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         )}
       </CardContent>
     </Card>
