@@ -1,5 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 type SidebarItemProps = {
   href: string;
@@ -37,7 +40,31 @@ const SidebarItem = ({ href, icon, label, isActive }: SidebarItemProps) => {
 };
 
 export default function Sidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+        variant: "default"
+      });
+      setLocation('/login');
+    } catch (error) {
+      toast({
+        title: "Logout Error",
+        description: "There was an issue logging out, but you've been signed out locally",
+        variant: "destructive"
+      });
+      setLocation('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   
   return (
     <aside className="fixed top-0 left-0 bottom-0 z-20 w-16 lg:w-64 bg-[#191A2A] border-r border-cyan-400/20 transition-all duration-300 overflow-hidden">
@@ -104,14 +131,32 @@ export default function Sidebar() {
               <p className="text-sm font-medium">Harsh Patil</p>
               <p className="text-xs text-gray-400">Pro Member</p>
             </div>
-            <button className="ml-auto text-gray-400 hover:text-white">
-              <i className="ri-settings-3-line"></i>
+            <button 
+              className="ml-auto text-gray-400 hover:text-red-400 transition-colors"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              title="Logout"
+            >
+              {isLoggingOut ? (
+                <div className="w-4 h-4 border-2 border-gray-400/20 border-t-gray-400 rounded-full animate-spin"></div>
+              ) : (
+                <i className="ri-logout-box-r-line"></i>
+              )}
             </button>
           </div>
           <div className="lg:hidden flex justify-center">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
-              <span className="text-xs font-bold">JP</span>
-            </div>
+            <button 
+              className="w-10 h-10 rounded-full bg-gradient-to-r from-red-400 to-pink-500 flex items-center justify-center hover:opacity-80 transition-opacity"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              title="Logout"
+            >
+              {isLoggingOut ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                <i className="ri-logout-box-r-line text-white"></i>
+              )}
+            </button>
           </div>
         </div>
       </div>
