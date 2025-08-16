@@ -138,7 +138,7 @@ export default function WhaleActivity() {
   }
   
   return (
-    <Card className="bg-[#191A2A] border-white/10 h-full">
+    <Card className="bg-[#191A2A] border-white/10 h-full animate-[fadeInUp_0.8s_ease-out_0.2s] animate-fill-both">
       <CardHeader className="p-4 border-b border-white/5 flex flex-row items-center justify-between">
         <div className="flex items-center">
           <h3 className="font-orbitron text-lg">Live Whale Activity</h3>

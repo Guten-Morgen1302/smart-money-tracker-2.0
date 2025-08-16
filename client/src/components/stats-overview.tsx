@@ -84,14 +84,9 @@ function StatCard({
 
   return (
     <div className={cn(
-      "bg-[#191A2A] border rounded-lg p-4 relative overflow-hidden transition-all duration-500 cursor-pointer transform hover:scale-105 hover:shadow-2xl",
+      "bg-[#191A2A] border rounded-lg p-4 relative overflow-hidden transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl group",
       colorMap[color].border,
-      isGlowing && `animate-pulse shadow-2xl ${
-        color === 'blue' ? 'shadow-cyan-400/50 border-cyan-400/60' :
-        color === 'purple' ? 'shadow-purple-500/50 border-purple-500/60' :
-        color === 'green' ? 'shadow-green-400/50 border-green-400/60' :
-        'shadow-pink-500/50 border-pink-500/60'
-      }`
+      "hover:shadow-cyan-400/20 hover:border-cyan-400/50"
     )}>
       {/* Live indicator */}
       {isGlowing && (
@@ -143,45 +138,53 @@ function StatCard({
 export default function StatsOverview() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatCard
-        title="Market Activity"
-        value="High"
-        label="Whale transactions"
-        labelValue="+215 today"
-        changePercentage="12%"
-        changeDirection="up"
-        color="blue"
-      />
+      <div className="animate-[fadeInUp_0.6s_ease-out] animation-delay-100">
+        <StatCard
+          title="Market Activity"
+          value="High"
+          label="Whale transactions"
+          labelValue="+215 today"
+          changePercentage="12%"
+          changeDirection="up"
+          color="blue"
+        />
+      </div>
       
-      <StatCard
-        title="Tracked Wallets"
-        value="856"
-        label="High risk wallets"
-        labelValue="28 active"
-        changePercentage="3%"
-        changeDirection="up"
-        color="purple"
-      />
+      <div className="animate-[fadeInUp_0.6s_ease-out] animation-delay-200">
+        <StatCard
+          title="Tracked Wallets"
+          value="856"
+          label="High risk wallets"
+          labelValue="28 active"
+          changePercentage="3%"
+          changeDirection="up"
+          color="purple"
+        />
+      </div>
       
-      <StatCard
-        title="AI Predictions"
-        value="9 Signals"
-        label="Accuracy rate"
-        labelValue="89%"
-        changePercentage="5 new"
-        changeDirection="neutral"
-        color="green"
-      />
+      <div className="animate-[fadeInUp_0.6s_ease-out] animation-delay-300">
+        <StatCard
+          title="AI Predictions"
+          value="9 Signals"
+          label="Accuracy rate"
+          labelValue="89%"
+          changePercentage="5 new"
+          changeDirection="neutral"
+          color="green"
+        />
+      </div>
       
-      <StatCard
-        title="Custom Alerts"
-        value="12 Active"
-        label="Triggered today"
-        labelValue="3 alerts"
-        changePercentage="2"
-        changeDirection="up"
-        color="pink"
-      />
+      <div className="animate-[fadeInUp_0.6s_ease-out] animation-delay-400">
+        <StatCard
+          title="Custom Alerts"
+          value="12 Active"
+          label="Triggered today"
+          labelValue="3 alerts"
+          changePercentage="2"
+          changeDirection="up"
+          color="pink"
+        />
+      </div>
     </div>
   );
 }

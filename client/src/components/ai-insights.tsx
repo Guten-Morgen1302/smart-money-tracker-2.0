@@ -148,7 +148,7 @@ export default function AIInsights() {
   }
   
   return (
-    <Card className="bg-[#191A2A] border-white/10 h-full">
+    <Card className="bg-[#191A2A] border-white/10 h-full animate-[slideInLeft_0.8s_ease-out_0.4s] animate-fill-both">
       <CardHeader className="p-4 border-b border-white/5 flex flex-row items-center justify-between">
         <div className="flex items-center">
           <h3 className="font-orbitron text-lg">AI Market Predictions</h3>

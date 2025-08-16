@@ -137,7 +137,7 @@ export default function MarketTrendChart() {
   }, [selectedCoin, selectedTimeframe]);
   
   return (
-    <Card className="bg-[#191A2A] border-white/10">
+    <Card className="bg-[#191A2A] border-white/10 animate-[fadeInUp_0.8s_ease-out_0.3s] animate-fill-both">
       <CardHeader className="border-b border-white/5 p-4 flex flex-row items-center justify-between">
         <h3 className="font-orbitron text-lg">Market Trend Analysis</h3>
         <div className="flex items-center space-x-2">
