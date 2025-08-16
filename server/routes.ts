@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertWalletSchema, insertTransactionSchema, insertAIInsightSchema, insertAlertSchema } from "@shared/schema";
+import { insertUserSchema, insertWalletSchema, insertTransactionSchema, insertAIInsightSchema, insertAlertSchema, insertSmartNotificationSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import session from "express-session";
@@ -288,6 +288,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }]
       });
+    }
+  });
+
+  // Smart Notifications routes
+  app.post("/api/notifications/smart/check", async (req, res) => {
+    try {
+      // For demo, use userId 1
+      const userId = 1;
+      const newNotifications = await storage.generateSmartNotifications(userId);
+      res.json(newNotifications);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to generate smart notifications" });
+    }
+  });
+
+  app.get("/api/notifications/smart", async (req, res) => {
+    try {
+      // For demo, use userId 1
+      const userId = 1;
+      const notifications = await storage.getSmartNotifications(userId);
+      res.json(notifications);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch smart notifications" });
+    }
+  });
+
+  app.post("/api/notifications/smart/:id/acknowledge", async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      await storage.acknowledgeSmartNotification(notificationId);
+      res.json({ message: "Notification acknowledged" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to acknowledge notification" });
     }
   });
 

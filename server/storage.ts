@@ -1,4 +1,4 @@
-import { users, type User, type InsertUser, wallets, type Wallet, type InsertWallet, transactions, type Transaction, type InsertTransaction, aiInsights, type AIInsight, type InsertAIInsight, alerts, type Alert, type InsertAlert } from "@shared/schema";
+import { users, type User, type InsertUser, wallets, type Wallet, type InsertWallet, transactions, type Transaction, type InsertTransaction, aiInsights, type AIInsight, type InsertAIInsight, alerts, type Alert, type InsertAlert, smartNotifications, type SmartNotification, type InsertSmartNotification } from "@shared/schema";
 import { generateActivityData } from "@/lib/utils";
 
 // Interface for storage methods
@@ -25,6 +25,12 @@ export interface IStorage {
   createAlert(alert: InsertAlert): Promise<Alert>;
   updateAlert(id: number, data: Partial<Alert>): Promise<Alert>;
   deleteAlert(id: number): Promise<void>;
+  
+  // Smart Notification operations
+  getSmartNotifications(userId: number): Promise<SmartNotification[]>;
+  createSmartNotification(data: InsertSmartNotification): Promise<SmartNotification>;
+  acknowledgeSmartNotification(id: number): Promise<void>;
+  generateSmartNotifications(userId: number): Promise<SmartNotification[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -34,6 +40,7 @@ export class MemStorage implements IStorage {
   private transactions: Map<number, Transaction>;
   private aiInsights: Map<number, AIInsight>;
   private alerts: Map<number, Alert>;
+  private smartNotifications: Map<number, SmartNotification>;
   
   // ID counters
   private userIdCounter: number;
@@ -41,6 +48,16 @@ export class MemStorage implements IStorage {
   private transactionIdCounter: number;
   private aiInsightIdCounter: number;
   private alertIdCounter: number;
+  private smartNotificationIdCounter: number;
+  
+  // User spending data for smart notifications (simulated)
+  private userSpendingData: Map<number, {
+    category: string;
+    currentMonth: number;
+    previousMonth: number;
+    historicalAverage: number;
+    threshold?: number;
+  }[]>;
   
   constructor() {
     this.users = new Map();
@@ -48,12 +65,46 @@ export class MemStorage implements IStorage {
     this.transactions = new Map();
     this.aiInsights = new Map();
     this.alerts = new Map();
+    this.smartNotifications = new Map();
     
     this.userIdCounter = 1;
     this.walletIdCounter = 1;
     this.transactionIdCounter = 1;
     this.aiInsightIdCounter = 1;
     this.alertIdCounter = 1;
+    this.smartNotificationIdCounter = 1;
+    this.userSpendingData = new Map();
+    
+    // Initialize sample spending data for smart notifications
+    this.userSpendingData.set(1, [
+      {
+        category: "BTC",
+        currentMonth: 12500,
+        previousMonth: 8200,
+        historicalAverage: 9500,
+        threshold: 15000
+      },
+      {
+        category: "ETH",
+        currentMonth: 8500,
+        previousMonth: 7800,
+        historicalAverage: 7200,
+        threshold: 10000
+      },
+      {
+        category: "SOL",
+        currentMonth: 2800,
+        previousMonth: 1900,
+        historicalAverage: 2100,
+        threshold: 3000
+      },
+      {
+        category: "USDC",
+        currentMonth: 5200,
+        previousMonth: 4100,
+        historicalAverage: 4800
+      }
+    ]);
     
     // Initialize with sample data
     this.initSampleData();
@@ -362,6 +413,105 @@ export class MemStorage implements IStorage {
         createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString()
       });
     });
+  }
+  
+  // Smart Notifications Methods
+  async getSmartNotifications(userId: number): Promise<SmartNotification[]> {
+    return Array.from(this.smartNotifications.values())
+      .filter(notification => notification.userId === userId)
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+  }
+  
+  async createSmartNotification(data: InsertSmartNotification): Promise<SmartNotification> {
+    const id = this.smartNotificationIdCounter++;
+    const notification: SmartNotification = {
+      ...data,
+      id,
+      createdAt: new Date().toISOString()
+    };
+    
+    this.smartNotifications.set(id, notification);
+    return notification;
+  }
+  
+  async acknowledgeSmartNotification(id: number): Promise<void> {
+    const notification = this.smartNotifications.get(id);
+    if (notification) {
+      this.smartNotifications.set(id, { ...notification, acknowledged: true });
+    }
+  }
+  
+  async generateSmartNotifications(userId: number): Promise<SmartNotification[]> {
+    const spendingData = this.userSpendingData.get(userId) || [];
+    const newNotifications: SmartNotification[] = [];
+    
+    for (const data of spendingData) {
+      const { category, currentMonth, previousMonth, historicalAverage, threshold } = data;
+      
+      // Check for threshold warnings
+      if (threshold && currentMonth >= threshold) {
+        const existing = Array.from(this.smartNotifications.values())
+          .find(n => n.userId === userId && n.category === category && 
+                    n.triggerType === 'THRESHOLD' && !n.acknowledged);
+        
+        if (!existing) {
+          const notification = await this.createSmartNotification({
+            userId,
+            title: `${category} Spending Threshold Reached`,
+            description: `You've reached your spending threshold for ${category}. Current: $${currentMonth.toLocaleString()}, Threshold: $${threshold.toLocaleString()}`,
+            category,
+            triggerType: 'THRESHOLD',
+            triggerValue: threshold.toString(),
+            acknowledged: false
+          });
+          newNotifications.push(notification);
+        }
+      }
+      
+      // Check for month-to-month increases
+      const monthlyIncrease = ((currentMonth - previousMonth) / previousMonth) * 100;
+      if (monthlyIncrease > 20) {
+        const existing = Array.from(this.smartNotifications.values())
+          .find(n => n.userId === userId && n.category === category && 
+                    n.triggerType === 'MONTHLY_COMPARISON' && !n.acknowledged);
+        
+        if (!existing) {
+          const notification = await this.createSmartNotification({
+            userId,
+            title: `${category} Monthly Spending Spike`,
+            description: `Your ${category} expenses have risen by ${monthlyIncrease.toFixed(1)}% since last month. Current: $${currentMonth.toLocaleString()}, Previous: $${previousMonth.toLocaleString()}`,
+            category,
+            triggerType: 'MONTHLY_COMPARISON',
+            triggerValue: monthlyIncrease.toFixed(1),
+            acknowledged: false
+          });
+          newNotifications.push(notification);
+        }
+      }
+      
+      // Check for trend deviations
+      const trendDeviation = ((currentMonth - historicalAverage) / historicalAverage) * 100;
+      if (trendDeviation > 20) {
+        const existing = Array.from(this.smartNotifications.values())
+          .find(n => n.userId === userId && n.category === category && 
+                    n.triggerType === 'TREND' && !n.acknowledged);
+        
+        if (!existing) {
+          const notification = await this.createSmartNotification({
+            userId,
+            title: `${category} Spending Pattern Alert`,
+            description: `Your ${category} spending is ${trendDeviation.toFixed(1)}% higher than your usual trend. Current: $${currentMonth.toLocaleString()}, Average: $${historicalAverage.toLocaleString()}`,
+            category,
+            triggerType: 'TREND',
+            triggerValue: trendDeviation.toFixed(1),
+            acknowledged: false
+          });
+          newNotifications.push(notification);
+        }
+      }
+    }
+    
+    return newNotifications;
   }
 }
 

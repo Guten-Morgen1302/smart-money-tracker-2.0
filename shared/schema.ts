@@ -54,6 +54,18 @@ export const alerts = pgTable("alerts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const smartNotifications = pgTable("smart_notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // BTC, ETH, SOL, etc.
+  triggerType: text("trigger_type").notNull(), // TREND, MONTHLY_COMPARISON, THRESHOLD
+  triggerValue: text("trigger_value").notNull(), // Numeric value as string
+  acknowledged: boolean("acknowledged").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -81,6 +93,11 @@ export const insertAlertSchema = createInsertSchema(alerts).omit({
   createdAt: true,
 });
 
+export const insertSmartNotificationSchema = createInsertSchema(smartNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Type exports
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -96,3 +113,6 @@ export type AIInsight = typeof aiInsights.$inferSelect;
 
 export type InsertAlert = z.infer<typeof insertAlertSchema>;
 export type Alert = typeof alerts.$inferSelect;
+
+export type InsertSmartNotification = z.infer<typeof insertSmartNotificationSchema>;
+export type SmartNotification = typeof smartNotifications.$inferSelect;

@@ -23,6 +23,18 @@ type Alert = {
   createdAt: string;
 };
 
+type SmartNotification = {
+  id: number;
+  userId: number;
+  title: string;
+  description: string;
+  category: string;
+  triggerType: 'TREND' | 'MONTHLY_COMPARISON' | 'THRESHOLD';
+  triggerValue: string;
+  acknowledged: boolean;
+  createdAt: string;
+};
+
 export default function Alerts() {
   // Add circuit pattern background effect
   useEffect(() => {
@@ -59,10 +71,19 @@ export default function Alerts() {
     alertType: "transaction"
   });
   
+  const [smartNotificationsOpen, setSmartNotificationsOpen] = useState(true);
+  const [generatingNotifications, setGeneratingNotifications] = useState(false);
+  
   // Fetch alerts
   const { data: alerts, isLoading } = useQuery({
     queryKey: ['/api/alerts'],
     staleTime: 60000 // Refresh every minute
+  });
+  
+  // Fetch smart notifications
+  const { data: smartNotifications, isLoading: isLoadingNotifications, refetch: refetchNotifications } = useQuery({
+    queryKey: ['/api/notifications/smart'],
+    staleTime: 30000 // Refresh every 30 seconds
   });
   
   // Sample alerts for initial rendering if API hasn't loaded yet
@@ -258,6 +279,82 @@ export default function Alerts() {
     }
   };
   
+  const generateSmartNotifications = async () => {
+    setGeneratingNotifications(true);
+    try {
+      await apiRequest("POST", "/api/notifications/smart/check", {});
+      await refetchNotifications();
+      
+      toast({
+        title: "Smart Notifications Generated",
+        description: "New smart notifications have been generated based on your spending patterns",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate smart notifications. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingNotifications(false);
+    }
+  };
+  
+  const acknowledgeNotification = async (id: number) => {
+    try {
+      await apiRequest("POST", `/api/notifications/smart/${id}/acknowledge`, {});
+      await refetchNotifications();
+      
+      toast({
+        title: "Notification Acknowledged",
+        description: "The notification has been marked as read",
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to acknowledge notification. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const getTriggerTypeColor = (triggerType: string) => {
+    switch (triggerType) {
+      case 'THRESHOLD':
+        return 'border-red-500/50 bg-red-500/10 text-red-400';
+      case 'MONTHLY_COMPARISON':
+        return 'border-yellow-500/50 bg-yellow-500/10 text-yellow-400';
+      case 'TREND':
+        return 'border-blue-500/50 bg-blue-500/10 text-blue-400';
+      default:
+        return 'border-gray-500/50 bg-gray-500/10 text-gray-400';
+    }
+  };
+  
+  const getTriggerTypeIcon = (triggerType: string) => {
+    switch (triggerType) {
+      case 'THRESHOLD':
+        return 'ri-alarm-warning-line';
+      case 'MONTHLY_COMPARISON':
+        return 'ri-calendar-line';
+      case 'TREND':
+        return 'ri-line-chart-line';
+      default:
+        return 'ri-notification-line';
+    }
+  };
+  
+  const groupedNotifications = (smartNotifications || []).reduce((groups: any, notification: SmartNotification) => {
+    const key = `${notification.category}-${notification.triggerType}`;
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(notification);
+    return groups;
+  }, {});
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -327,6 +424,119 @@ export default function Alerts() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Smart Notifications Section */}
+          <Card className="bg-[#191A2A] border-white/10">
+            <CardHeader className="p-4 border-b border-white/5 flex flex-row items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <h3 className="font-orbitron text-lg">Smart Notifications</h3>
+                <Badge className="bg-cyan-400/20 text-cyan-400 border-cyan-400/50">
+                  AI-Powered
+                </Badge>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  onClick={() => setSmartNotificationsOpen(!smartNotificationsOpen)}
+                  variant="outline" 
+                  size="sm"
+                  className="border-cyan-400/30 text-white hover:bg-white/5"
+                >
+                  {smartNotificationsOpen ? 'Collapse' : 'Expand'}
+                </Button>
+                <Button 
+                  onClick={generateSmartNotifications}
+                  disabled={generatingNotifications}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                >
+                  {generatingNotifications ? (
+                    <div className="flex items-center">
+                      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></div>
+                      Generating...
+                    </div>
+                  ) : (
+                    <>
+                      <i className="ri-brain-line mr-2"></i>
+                      Generate Smart Alerts
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardHeader>
+            
+            {smartNotificationsOpen && (
+              <CardContent className="p-0">
+                {isLoadingNotifications ? (
+                  <div className="p-8 text-center">
+                    <div className="inline-block w-12 h-12 border-2 border-t-cyan-400 border-r-cyan-400 border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 text-gray-400">Loading smart notifications...</p>
+                  </div>
+                ) : Object.keys(groupedNotifications).length === 0 ? (
+                  <div className="p-8 text-center">
+                    <i className="ri-notification-off-line text-4xl text-gray-400 mb-4"></i>
+                    <p className="text-gray-400 mb-2">No smart notifications yet</p>
+                    <p className="text-sm text-gray-500">Click "Generate Smart Alerts" to analyze your spending patterns</p>
+                  </div>
+                ) : (
+                  <div className="p-4 space-y-4">
+                    {Object.entries(groupedNotifications).map(([key, notifications]: [string, any]) => {
+                      const notification = notifications[0] as SmartNotification;
+                      return (
+                        <div key={key} className={`p-4 rounded-lg border ${getTriggerTypeColor(notification.triggerType)}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-3">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getTriggerTypeColor(notification.triggerType)}`}>
+                                <i className={`${getTriggerTypeIcon(notification.triggerType)} text-lg`}></i>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <h4 className="font-medium">{notification.title}</h4>
+                                  <Badge className={`text-xs ${getTriggerTypeColor(notification.triggerType)}`}>
+                                    {notification.category}
+                                  </Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    {notification.triggerType.replace('_', ' ')}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-gray-300 mb-2">{notification.description}</p>
+                                <div className="flex items-center space-x-4 text-xs text-gray-400">
+                                  <span>Trigger Value: {notification.triggerValue}{notification.triggerType === 'THRESHOLD' ? '' : '%'}</span>
+                                  <span>{formatDate(notification.createdAt)}</span>
+                                  {notifications.length > 1 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      +{notifications.length - 1} more
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {!notification.acknowledged && (
+                                <Button
+                                  onClick={() => acknowledgeNotification(notification.id)}
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-cyan-400/30 text-cyan-400 hover:bg-cyan-400/10"
+                                >
+                                  <i className="ri-check-line mr-1"></i>
+                                  Acknowledge
+                                </Button>
+                              )}
+                              {notification.acknowledged && (
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
+                                  <i className="ri-check-line mr-1"></i>
+                                  Acknowledged
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
           
           {/* Alerts Management */}
           <Card className="bg-[#191A2A] border-white/10">
