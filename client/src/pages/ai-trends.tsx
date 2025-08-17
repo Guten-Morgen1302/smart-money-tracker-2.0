@@ -4,7 +4,7 @@ import Header from "@/components/header";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import MarketTrendChart from "@/components/market-trend-chart";
 import AIInsights from "@/components/ai-insights"; 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";
 
 // AI Prediction type with enhanced properties
@@ -345,6 +345,318 @@ function PredictionCard({
   );
 }
 
+// Whale Activity Chart Component
+function WhaleActivityChart() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-[#0A0A10]/70 p-4 rounded-lg border border-white/10"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-orbitron text-lg">Whale Activity Patterns</h4>
+        <motion.div
+          className="w-3 h-3 bg-blue-400 rounded-full"
+          animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      </div>
+      
+      <div className="space-y-4">
+        {/* Large Transaction Flow */}
+        <div className="p-3 bg-gradient-to-r from-blue-400/10 to-transparent rounded border border-blue-400/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-blue-400">Large Transaction Flow</span>
+            <span className="text-xs text-gray-400">Last 24h</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-full bg-white/10 rounded-full h-2 mr-3">
+              <motion.div
+                className="bg-blue-400 h-2 rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: "78%" }}
+                transition={{ duration: 2, delay: 0.5 }}
+              />
+            </div>
+            <span className="text-sm font-medium">
+              <AnimatedCounter end={78} suffix="%" />
+            </span>
+          </div>
+        </div>
+
+        {/* Exchange Flows */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="p-3 bg-gradient-to-r from-green-400/10 to-transparent rounded border border-green-400/20">
+            <div className="text-xs text-green-400 mb-1">Exchange Inflow</div>
+            <div className="text-lg font-orbitron">
+              <AnimatedCounter end={234} prefix="$" suffix="M" />
+            </div>
+          </div>
+          <div className="p-3 bg-gradient-to-r from-red-400/10 to-transparent rounded border border-red-400/20">
+            <div className="text-xs text-red-400 mb-1">Exchange Outflow</div>
+            <div className="text-lg font-orbitron">
+              <AnimatedCounter end={445} prefix="$" suffix="M" />
+            </div>
+          </div>
+        </div>
+
+        {/* Whale Address Activity */}
+        <div className="space-y-2">
+          <h5 className="text-sm text-gray-400">Top Whale Addresses</h5>
+          {[
+            { address: "0x3f5CE5F...7aE2", activity: 92, change: "+15%" },
+            { address: "0x742d35C...9B4f", activity: 87, change: "+8%" },
+            { address: "0x1a9C8F...3D1e", activity: 74, change: "-3%" }
+          ].map((whale, index) => (
+            <motion.div
+              key={whale.address}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: index * 0.2 }}
+              className="flex items-center justify-between p-2 bg-white/5 rounded"
+            >
+              <span className="text-xs font-mono">{whale.address}</span>
+              <div className="flex items-center space-x-2">
+                <div className="w-12 bg-white/10 rounded-full h-1">
+                  <motion.div
+                    className="bg-cyan-400 h-1 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${whale.activity}%` }}
+                    transition={{ duration: 1.5, delay: index * 0.2 + 1 }}
+                  />
+                </div>
+                <span className={`text-xs ${whale.change.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
+                  {whale.change}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Whale Insights Component
+function WhaleInsights() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="bg-[#0A0A10]/70 p-4 rounded-lg border border-white/10"
+    >
+      <h4 className="font-orbitron text-lg mb-4">Whale Insights</h4>
+      
+      <div className="space-y-4">
+        {[
+          {
+            title: "Accumulation Phase",
+            description: "Large wallets showing 23% increase in holdings over 48h",
+            confidence: 88,
+            icon: "🐋",
+            color: "text-blue-400"
+          },
+          {
+            title: "Exchange Outflows",
+            description: "Major exchanges seeing significant BTC withdrawals",
+            confidence: 76,
+            icon: "📤",
+            color: "text-green-400"
+          },
+          {
+            title: "Staking Increase",
+            description: "ETH staking deposits up 45% from whale addresses",
+            confidence: 82,
+            icon: "⭐",
+            color: "text-purple-400"
+          }
+        ].map((insight, index) => (
+          <motion.div
+            key={insight.title}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: index * 0.3 + 0.5 }}
+            className="p-3 bg-gradient-to-r from-white/5 to-transparent rounded border border-white/10"
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">{insight.icon}</span>
+                <span className={`text-sm font-medium ${insight.color}`}>{insight.title}</span>
+              </div>
+              <ConfidenceBadge confidence={insight.confidence} />
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              <TypewriterText text={insight.description} delay={index * 300 + 800} />
+            </p>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Social Sentiment Chart Component
+function SocialSentimentChart() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="bg-[#0A0A10]/70 p-4 rounded-lg border border-white/10"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="font-orbitron text-lg">Social Sentiment Analysis</h4>
+        <motion.div
+          className="w-3 h-3 bg-pink-400 rounded-full"
+          animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      </div>
+      
+      <div className="space-y-4">
+        {/* Sentiment Overview */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="p-3 bg-gradient-to-r from-green-400/10 to-transparent rounded border border-green-400/20 text-center">
+            <div className="text-lg font-orbitron text-green-400">
+              <AnimatedCounter end={67} suffix="%" />
+            </div>
+            <div className="text-xs text-gray-400">Bullish</div>
+          </div>
+          <div className="p-3 bg-gradient-to-r from-yellow-400/10 to-transparent rounded border border-yellow-400/20 text-center">
+            <div className="text-lg font-orbitron text-yellow-400">
+              <AnimatedCounter end={21} suffix="%" />
+            </div>
+            <div className="text-xs text-gray-400">Neutral</div>
+          </div>
+          <div className="p-3 bg-gradient-to-r from-red-400/10 to-transparent rounded border border-red-400/20 text-center">
+            <div className="text-lg font-orbitron text-red-400">
+              <AnimatedCounter end={12} suffix="%" />
+            </div>
+            <div className="text-xs text-gray-400">Bearish</div>
+          </div>
+        </div>
+
+        {/* Platform Sentiment */}
+        <div className="space-y-3">
+          <h5 className="text-sm text-gray-400">Platform Sentiment</h5>
+          {[
+            { platform: "Twitter", sentiment: 78, mentions: "12.4K", color: "text-blue-400", bgColor: "bg-blue-400" },
+            { platform: "Reddit", sentiment: 65, mentions: "8.9K", color: "text-orange-400", bgColor: "bg-orange-400" },
+            { platform: "Discord", sentiment: 82, mentions: "5.2K", color: "text-purple-400", bgColor: "bg-purple-400" },
+            { platform: "Telegram", sentiment: 71, mentions: "15.6K", color: "text-cyan-400", bgColor: "bg-cyan-400" }
+          ].map((platform, index) => (
+            <motion.div
+              key={platform.platform}
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: index * 0.2 }}
+              className="flex items-center justify-between p-3 bg-white/5 rounded"
+            >
+              <div className="flex items-center">
+                <div className={`w-3 h-3 rounded-full ${platform.bgColor} mr-2`} />
+                <span className="text-sm">{platform.platform}</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <span className="text-xs text-gray-400">{platform.mentions} mentions</span>
+                <div className="w-16 bg-white/10 rounded-full h-2">
+                  <motion.div
+                    className={`${platform.bgColor} h-2 rounded-full`}
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${platform.sentiment}%` }}
+                    transition={{ duration: 1.5, delay: index * 0.2 + 1 }}
+                  />
+                </div>
+                <span className={`text-sm ${platform.color}`}>
+                  <AnimatedCounter end={platform.sentiment} suffix="%" />
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Trending Topics */}
+        <div className="space-y-2">
+          <h5 className="text-sm text-gray-400">Trending Topics</h5>
+          <div className="flex flex-wrap gap-2">
+            {["#Bitcoin", "#ETH2.0", "#DeFi", "#NFTs", "#Web3", "#Metaverse"].map((topic, index) => (
+              <motion.span
+                key={topic}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.1 + 1 }}
+                className="px-2 py-1 bg-gradient-to-r from-pink-400/20 to-purple-500/20 text-pink-400 rounded-full text-xs border border-pink-400/30"
+              >
+                {topic}
+              </motion.span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Social Insights Component
+function SocialInsights() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="bg-[#0A0A10]/70 p-4 rounded-lg border border-white/10"
+    >
+      <h4 className="font-orbitron text-lg mb-4">Social Insights</h4>
+      
+      <div className="space-y-4">
+        {[
+          {
+            title: "Bullish Surge",
+            description: "Twitter mentions spike 340% with positive sentiment dominating crypto discussions",
+            confidence: 91,
+            icon: "🚀",
+            color: "text-green-400"
+          },
+          {
+            title: "Influencer Activity",
+            description: "Top crypto influencers showing increased engagement with altcoin projects",
+            confidence: 73,
+            icon: "👑",
+            color: "text-purple-400"
+          },
+          {
+            title: "Community Growth",
+            description: "Reddit crypto communities see 25% membership increase in past week",
+            confidence: 85,
+            icon: "📈",
+            color: "text-blue-400"
+          }
+        ].map((insight, index) => (
+          <motion.div
+            key={insight.title}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: index * 0.3 + 0.5 }}
+            className="p-3 bg-gradient-to-r from-white/5 to-transparent rounded border border-white/10"
+          >
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center">
+                <span className="text-lg mr-2">{insight.icon}</span>
+                <span className={`text-sm font-medium ${insight.color}`}>{insight.title}</span>
+              </div>
+              <ConfidenceBadge confidence={insight.confidence} />
+            </div>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              <TypewriterText text={insight.description} delay={index * 300 + 800} />
+            </p>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function AITrends() {
   const [predictions, setPredictions] = useState<AIPrediction[]>([]);
   const [stats, setStats] = useState({
@@ -604,12 +916,32 @@ export default function AITrends() {
                     <TabsTrigger value="social" className="bg-white/5 text-gray-400 hover:bg-white/10" data-testid="tab-social">Social Signals</TabsTrigger>
                   </TabsList>
                   
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                      <MarketTrendChart />
+                  <TabsContent value="market">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2">
+                        <MarketTrendChart />
+                      </div>
+                      <AIInsights />
                     </div>
-                    <AIInsights />
-                  </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="whales">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2">
+                        <WhaleActivityChart />
+                      </div>
+                      <WhaleInsights />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="social">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <div className="lg:col-span-2">
+                        <SocialSentimentChart />
+                      </div>
+                      <SocialInsights />
+                    </div>
+                  </TabsContent>
                 </Tabs>
               </CardContent>
             </Card>
