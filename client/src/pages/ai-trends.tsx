@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -195,14 +195,11 @@ function TypewriterText({ text, delay = 0 }: { text: string; delay?: number }) {
   return <span>{displayText}</span>;
 }
 
-// Main Prediction Card Component
-function PredictionCard({ 
-  prediction, 
-  index 
-}: { 
-  prediction: AIPrediction; 
-  index: number;
-}) {
+// Main Prediction Card Component with forwardRef for Framer Motion
+const PredictionCard = forwardRef<
+  HTMLDivElement,
+  { prediction: AIPrediction; index: number }
+>(({ prediction, index }, ref) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -343,7 +340,9 @@ function PredictionCard({
       </motion.div>
     </motion.div>
   );
-}
+});
+
+PredictionCard.displayName = "PredictionCard";
 
 // Whale Activity Chart Component
 function WhaleActivityChart() {
@@ -723,9 +722,14 @@ export default function AITrends() {
     }
   ];
 
-  // Initialize predictions
+  // Initialize predictions with error handling
   useEffect(() => {
-    setPredictions(samplePredictions);
+    try {
+      setPredictions(samplePredictions);
+    } catch (error) {
+      console.error('Error initializing predictions:', error);
+      setPredictions([]);
+    }
   }, []);
 
   // Generate new predictions dynamically
@@ -774,31 +778,36 @@ export default function AITrends() {
     };
   }, []);
 
-  // Add new predictions every 10-15 seconds
+  // Add new predictions every 10-15 seconds with error handling
   useEffect(() => {
     const interval = setInterval(() => {
-      const newPrediction = generateNewPrediction();
-      
-      // Play notification sound
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {
-          // Ignore audio errors in case user hasn't interacted yet
+      try {
+        const newPrediction = generateNewPrediction();
+        
+        // Play notification sound
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {
+            // Silently ignore audio errors in case user hasn't interacted yet
+            console.debug('Audio playback failed - user interaction required');
+          });
+        }
+        
+        setPredictions(prev => {
+          const updated = prev.map(p => ({ ...p, isNew: false }));
+          return [newPrediction, ...updated].slice(0, 8); // Keep only 8 predictions
         });
-      }
-      
-      setPredictions(prev => {
-        const updated = prev.map(p => ({ ...p, isNew: false }));
-        return [newPrediction, ...updated].slice(0, 8); // Keep only 8 predictions
-      });
-      
-      // Update stats occasionally
-      if (Math.random() > 0.7) {
-        setStats(prev => ({
-          accuracy: Math.min(95, prev.accuracy + Math.floor(Math.random() * 3)),
-          activeSignals: Math.max(5, prev.activeSignals + Math.floor(Math.random() * 3) - 1),
-          dataSources: prev.dataSources
-        }));
+        
+        // Update stats occasionally
+        if (Math.random() > 0.7) {
+          setStats(prev => ({
+            accuracy: Math.min(95, prev.accuracy + Math.floor(Math.random() * 3)),
+            activeSignals: Math.max(5, prev.activeSignals + Math.floor(Math.random() * 3) - 1),
+            dataSources: prev.dataSources
+          }));
+        }
+      } catch (error) {
+        console.error('Error updating predictions:', error);
       }
     }, Math.random() * 5000 + 10000); // 10-15 seconds
     

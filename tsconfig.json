@@ -6,6 +6,7 @@
     "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
     "noEmit": true,
     "module": "ESNext",
+    "target": "es2022",
     "strict": true, 
     "lib": ["esnext", "dom", "dom.iterable"],
     "jsx": "preserve",
