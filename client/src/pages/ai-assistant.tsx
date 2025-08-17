@@ -601,29 +601,68 @@ export default function AIAssistant() {
   const generateAIResponse = (prompt: string): string => {
     const lower = prompt.toLowerCase().trim();
     
+    // Extract time periods from the query
+    const extractTimeFrame = (text: string) => {
+      if (text.includes('30 min') || text.includes('30min')) return '30 minutes';
+      if (text.includes('1 hour') || text.includes('1hr')) return '1 hour';
+      if (text.includes('2 hour') || text.includes('2hr')) return '2 hours';
+      if (text.includes('6 hour') || text.includes('6hr')) return '6 hours';
+      if (text.includes('24 hour') || text.includes('24hr') || text.includes('1 day')) return '24 hours';
+      if (text.includes('1 week')) return '1 week';
+      return '6 hours'; // default
+    };
+    
+    // Extract cryptocurrency from query
+    const extractCrypto = (text: string) => {
+      if (text.includes('avax') || text.includes('avalanche')) return 'AVAX';
+      if (text.includes('btc') || text.includes('bitcoin')) return 'BTC';
+      if (text.includes('eth') || text.includes('ethereum')) return 'ETH';
+      if (text.includes('usdc')) return 'USDC';
+      if (text.includes('usdt')) return 'USDT';
+      return 'BTC'; // default
+    };
+    
+    // Extract transaction type
+    const getTransactionType = (text: string) => {
+      if (text.includes('inflow') || text.includes('deposit')) return 'inflows to exchanges';
+      if (text.includes('outflow') || text.includes('withdrawal')) return 'outflows from exchanges';
+      return 'movements';
+    };
+    
+    const timeFrame = extractTimeFrame(lower);
+    const crypto = extractCrypto(lower);
+    const transactionType = getTransactionType(lower);
+    
     // Basic greetings - more flexible matching
     if (lower.match(/^(hi+|hey+|hello|sup|what's up|yo)$/)) {
       return "Hi there! I'm your AI crypto analyst. I can help you track whale movements, analyze market trends, check wallet risk scores, and provide real-time crypto insights. What would you like to know?";
     }
     
-    // Price related queries
+    // Whale movements with contextual details
+    if (lower.includes('whale') || lower.includes('top') || lower.includes('large')) {
+      const amounts = ['$12.5M', '$45.8M', '$23.1M', '$67.3M', '$89.2M', '$156.7M'];
+      const amount = amounts[Math.floor(Math.random() * amounts.length)];
+      
+      if (crypto === 'AVAX' && timeFrame === '30 minutes') {
+        return `Top AVAX whale ${transactionType} in the last 30 minutes: 3 major transactions totaling ${amount}. Largest single move: ${amounts[0]} from 0x3f5...7aE2 to Binance. This suggests potential selling pressure or profit-taking activity.`;
+      }
+      
+      return `Top ${crypto} whale ${transactionType} in the last ${timeFrame} include ${Math.floor(Math.random() * 5) + 2} major transactions totaling ${amount}. This ${transactionType.includes('outflow') ? 'typically indicates institutional accumulation' : 'suggests potential selling pressure'} and could signal ${transactionType.includes('outflow') ? 'bullish' : 'bearish'} sentiment.`;
+    }
+    
+    // Price related queries with time context
     if (lower.includes('price') || lower.includes('btc') || lower.includes('bitcoin') || lower.includes('eth') || lower.includes('ethereum')) {
-      return "Based on current on-chain analysis, I'm seeing significant whale accumulation patterns in BTC addresses over $10M. The data suggests potential upward price pressure in the next 24-48 hours with 87% confidence.";
+      return `Based on ${crypto} analysis over the last ${timeFrame}, I'm seeing ${Math.random() > 0.5 ? 'significant accumulation' : 'distribution'} patterns in addresses over $10M. The data suggests potential ${Math.random() > 0.5 ? 'upward' : 'downward'} price pressure with ${Math.floor(Math.random() * 20) + 75}% confidence.`;
     }
     
     // Wallet analysis
     if (lower.includes('wallet') || lower.includes('address') || lower.includes('0x')) {
-      return "The wallet you're asking about shows moderate risk indicators. Transaction patterns suggest legitimate DeFi activity with some exposure to high-risk protocols. Risk score: Medium (6.2/10).";
+      return `The wallet you're analyzing shows ${['low', 'moderate', 'high'][Math.floor(Math.random() * 3)]} risk indicators over the last ${timeFrame}. Transaction patterns suggest ${['legitimate DeFi activity', 'mixed protocol interactions', 'high-frequency trading'][Math.floor(Math.random() * 3)]}. Risk score: ${['Low (2.1/10)', 'Medium (6.2/10)', 'High (8.7/10)'][Math.floor(Math.random() * 3)]}.`;
     }
     
-    // Whale movements
-    if (lower.includes('whale') || lower.includes('top') || lower.includes('large')) {
-      return "Top whale movements in the last 6 hours include major BTC outflows from exchanges totaling $245M. This typically indicates institutional accumulation and could signal bullish sentiment.";
-    }
-    
-    // Market predictions
+    // Market predictions with timeframe
     if (lower.includes('predict') || lower.includes('forecast') || lower.includes('market')) {
-      return "Market prediction models are showing 73% probability of a price breakout above current resistance levels. Social sentiment has turned bullish with 340% increase in positive mentions.";
+      return `Market prediction models for the next ${timeFrame} show ${Math.floor(Math.random() * 30) + 65}% probability of a price ${Math.random() > 0.5 ? 'breakout above resistance' : 'correction below support'} levels. Social sentiment has turned ${Math.random() > 0.5 ? 'bullish' : 'bearish'} with ${Math.floor(Math.random() * 200) + 150}% change in mentions.`;
     }
     
     // Explain/simplify requests
@@ -631,17 +670,17 @@ export default function AIAssistant() {
       return "Let me break this down simply: When whales (big investors) move their crypto off exchanges, it usually means they're planning to hold for longer. This reduces selling pressure and often leads to price increases.";
     }
     
-    // Avalanche specific
+    // Avalanche specific with context
     if (lower.includes('avalanche') || lower.includes('avax') || lower.includes('subnet')) {
-      return "Avalanche ecosystem is showing strong activity with subnet deployments increasing 45% this week. Major DeFi protocols are migrating to custom subnets for better performance and lower fees.";
+      return `Avalanche ecosystem activity in the last ${timeFrame}: subnet deployments ${Math.random() > 0.5 ? 'increased' : 'decreased'} ${Math.floor(Math.random() * 30) + 15}%. Major DeFi protocols are ${Math.random() > 0.5 ? 'migrating to' : 'evaluating'} custom subnets for better performance. Current AVAX whale activity shows ${transactionType} trending ${Math.random() > 0.5 ? 'upward' : 'downward'}.`;
     }
     
     // Default intelligent response
     const defaultResponses = [
-      "I can help you analyze that! Could you be more specific about what crypto data you'd like me to examine?",
-      "Interesting question! I can provide insights on whale movements, market trends, or wallet analysis. What would you like to focus on?",
-      "Based on current market conditions, I can help you understand on-chain patterns and price movements. What specific aspect interests you?",
-      "I'm analyzing real-time crypto data. Could you specify if you want whale tracking, price analysis, or risk assessment?"
+      `I can analyze ${crypto} data for the ${timeFrame} timeframe you specified. Could you be more specific about what type of analysis you need?`,
+      `For the ${timeFrame} period you mentioned, I can provide insights on whale movements, market trends, or wallet analysis. What would you like to focus on?`,
+      `Based on current ${crypto} market conditions over ${timeFrame}, I can help you understand on-chain patterns and price movements. What specific aspect interests you?`,
+      `I'm analyzing real-time ${crypto} data for your ${timeFrame} timeframe. Would you like whale tracking, price analysis, or risk assessment?`
     ];
     
     return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
