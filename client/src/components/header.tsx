@@ -46,21 +46,27 @@ export default function Header({ title, highlight }: HeaderProps) {
 
   // Check if user is connected and on correct network on component mount
   useEffect(() => {
-    checkWalletConnection();
-  }, []);
-
-  const checkWalletConnection = async () => {
-    try {
-      const currentWalletInfo = await web3Manager.getCurrentWalletInfo();
-      if (currentWalletInfo) {
-        setWalletInfo(currentWalletInfo);
-        const isOnFuji = await web3Manager.isConnectedToAvalancheFuji();
-        setIsOnWrongNetwork(!isOnFuji);
+    const checkWalletConnection = async () => {
+      try {
+        // Only check if window.ethereum exists to avoid errors
+        if (typeof window !== "undefined" && window.ethereum) {
+          const currentWalletInfo = await web3Manager.getCurrentWalletInfo();
+          if (currentWalletInfo) {
+            setWalletInfo(currentWalletInfo);
+            const isOnFuji = await web3Manager.isConnectedToAvalancheFuji();
+            setIsOnWrongNetwork(!isOnFuji);
+          }
+        }
+      } catch (error) {
+        // Silently handle the case where no wallet is connected
+        console.log("No wallet connected or wallet not ready");
       }
-    } catch (error) {
-      console.log("No wallet connected");
-    }
-  };
+    };
+
+    // Add a small delay to ensure the page is fully loaded
+    const timer = setTimeout(checkWalletConnection, 100);
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array to run only once on mount
 
   const connectWallet = async (walletType: "MetaMask" | "Core") => {
     setIsConnecting(true);

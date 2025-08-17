@@ -30,28 +30,21 @@ export interface WalletInfo {
 export class Web3Manager {
   private provider: ethers.BrowserProvider | null = null;
   private signer: ethers.JsonRpcSigner | null = null;
+  private listenersAdded = false;
 
   constructor() {
-    this.setupEventListeners();
+    // Only setup listeners on first instantiation
+    if (!this.listenersAdded) {
+      this.setupEventListeners();
+      this.listenersAdded = true;
+    }
   }
 
   // Setup event listeners for account and network changes
   private setupEventListeners() {
-    if (typeof window !== "undefined" && window.ethereum) {
-      window.ethereum.on("accountsChanged", (accounts: string[]) => {
-        if (accounts.length === 0) {
-          this.disconnect();
-        } else {
-          // Account changed, refresh connection
-          window.location.reload();
-        }
-      });
-
-      window.ethereum.on("chainChanged", (chainId: string) => {
-        // Network changed, refresh connection
-        window.location.reload();
-      });
-    }
+    // Skip event listeners to prevent reload issues
+    // We'll handle wallet changes through manual user actions instead
+    console.log("Web3Manager initialized without automatic event listeners");
   }
 
   // Check if wallet is installed
