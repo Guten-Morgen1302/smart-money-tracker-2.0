@@ -6,7 +6,7 @@
 ## 🏆 Competition Entry
 **Category:** AI-Powered Applications  
 **Team:** Smart Money Tracker AI  
-**Submission Date:** 2024  
+**Submission Date:** 2025  
 
 **Summary:**  
 Smart Money Tracker AI is an advanced cryptocurrency intelligence platform that empowers traders and investors with **real-time whale tracking**, **AI-powered market insights**, and **risk analysis**. By merging blockchain data with artificial intelligence, it delivers actionable intelligence for competitive decision-making.  
