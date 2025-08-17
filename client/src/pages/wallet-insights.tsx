@@ -77,42 +77,56 @@ export default function WalletInsights() {
 
   // Search wallet using comprehensive analysis API
   const handleSearch = async () => {
-    if (!searchAddress) return;
+    if (!searchAddress.trim()) {
+      toast({
+        title: "Invalid Address",
+        description: "Please enter a valid wallet address",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSearching(true);
     setHasSearched(false);
     setAnalysisData(null);
     
-    // Show analyzing animation for 5 seconds
-    setTimeout(async () => {
-      try {
-        const response = await fetch('/api/wallets/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ address: searchAddress }),
-        });
-        
-        const data = await response.json();
+    try {
+      // Make the API call immediately
+      const response = await fetch('/api/wallets/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address: searchAddress.trim() }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Show analyzing animation for 2 seconds, then show results
+      setTimeout(() => {
         setAnalysisData(data);
         setHasSearched(true);
+        setIsSearching(false);
         
         toast({
-          title: "Wallet Analysis Complete",
+          title: "Analysis Complete",
           description: `Successfully analyzed ${searchAddress.substring(0, 10)}...`,
         });
-      } catch (error) {
-        console.error('Wallet analysis error:', error);
-        toast({
-          title: "Analysis Failed",
-          description: "Unable to analyze wallet. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSearching(false);
-      }
-    }, 5000); // 5 second delay for analysis animation
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Wallet analysis error:', error);
+      setIsSearching(false);
+      toast({
+        title: "Analysis Failed",
+        description: "Unable to analyze wallet. Please check the address and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getRiskColor = (score: number) => {
