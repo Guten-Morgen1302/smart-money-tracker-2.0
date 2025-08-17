@@ -269,7 +269,7 @@ export default function Header({ title, highlight }: HeaderProps) {
       <Dialog open={showConnectDialog} onOpenChange={setShowConnectDialog}>
         <DialogContent className="bg-[#191A2A] border border-cyan-400/20 text-white">
           <DialogHeader>
-            <DialogTitle>Connect Your Wallet</DialogTitle>
+            <DialogTitle className="text-white text-lg font-orbitron">Connect Your Wallet</DialogTitle>
             <DialogDescription className="text-gray-400">
               Connect your Web3 wallet to start tracking and analyzing blockchain data
             </DialogDescription>
@@ -290,7 +290,7 @@ export default function Header({ title, highlight }: HeaderProps) {
                     <i className="ri-bear-smile-line text-lg text-orange-400"></i>
                   </div>
                   <div className="text-left">
-                    <h4 className="font-medium">MetaMask</h4>
+                    <h4 className="font-medium text-white">MetaMask</h4>
                     <p className="text-xs text-gray-400">Most popular Ethereum wallet</p>
                   </div>
                 </div>
@@ -308,7 +308,7 @@ export default function Header({ title, highlight }: HeaderProps) {
                     <i className="ri-snowflake-line text-lg text-red-400"></i>
                   </div>
                   <div className="text-left">
-                    <h4 className="font-medium">Core Wallet</h4>
+                    <h4 className="font-medium text-white">Core Wallet</h4>
                     <p className="text-xs text-gray-400">Official Avalanche wallet</p>
                   </div>
                 </div>
