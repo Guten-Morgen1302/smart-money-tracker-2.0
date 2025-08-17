@@ -156,6 +156,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Wallet analysis endpoint
+  app.post("/api/wallets/analyze", express.json(), async (req, res) => {
+    try {
+      const { address } = req.body;
+
+      if (!address) {
+        return res.status(400).json({ message: "Wallet address is required" });
+      }
+
+      // Generate comprehensive wallet analysis
+      const analysis = generateWalletAnalysis(address);
+      res.json(analysis);
+    } catch (err) {
+      console.error('Wallet analysis error:', err);
+      res.status(500).json({ message: "Failed to analyze wallet" });
+    }
+  });
+
   // Comprehensive wallet analysis endpoint
   app.post("/api/wallets/analyze", express.json(), async (req, res) => {
     try {
