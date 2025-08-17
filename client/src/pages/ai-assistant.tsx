@@ -599,15 +599,52 @@ export default function AIAssistant() {
   }, [detectIntent]);
   
   const generateAIResponse = (prompt: string): string => {
-    const responses = [
-      "Based on current on-chain analysis, I'm seeing significant whale accumulation patterns in BTC addresses over $10M. The data suggests potential upward price pressure in the next 24-48 hours with 87% confidence.",
-      "The wallet you're asking about shows moderate risk indicators. Transaction patterns suggest legitimate DeFi activity with some exposure to high-risk protocols. Risk score: Medium (6.2/10).",
-      "Top whale movements in the last 6 hours include major BTC outflows from exchanges totaling $245M. This typically indicates institutional accumulation and could signal bullish sentiment.",
-      "Market prediction models are showing 73% probability of a price breakout above current resistance levels. Social sentiment has turned bullish with 340% increase in positive mentions.",
-      "Let me break this down simply: When whales (big investors) move their crypto off exchanges, it usually means they're planning to hold for longer. This reduces selling pressure and often leads to price increases."
+    const lower = prompt.toLowerCase().trim();
+    
+    // Basic greetings
+    if (lower === "hi" || lower === "hello" || lower === "hey") {
+      return "Hi there! I'm your AI crypto analyst. I can help you track whale movements, analyze market trends, check wallet risk scores, and provide real-time crypto insights. What would you like to know?";
+    }
+    
+    // Price related queries
+    if (lower.includes('price') || lower.includes('btc') || lower.includes('bitcoin') || lower.includes('eth') || lower.includes('ethereum')) {
+      return "Based on current on-chain analysis, I'm seeing significant whale accumulation patterns in BTC addresses over $10M. The data suggests potential upward price pressure in the next 24-48 hours with 87% confidence.";
+    }
+    
+    // Wallet analysis
+    if (lower.includes('wallet') || lower.includes('address') || lower.includes('0x')) {
+      return "The wallet you're asking about shows moderate risk indicators. Transaction patterns suggest legitimate DeFi activity with some exposure to high-risk protocols. Risk score: Medium (6.2/10).";
+    }
+    
+    // Whale movements
+    if (lower.includes('whale') || lower.includes('top') || lower.includes('large')) {
+      return "Top whale movements in the last 6 hours include major BTC outflows from exchanges totaling $245M. This typically indicates institutional accumulation and could signal bullish sentiment.";
+    }
+    
+    // Market predictions
+    if (lower.includes('predict') || lower.includes('forecast') || lower.includes('market')) {
+      return "Market prediction models are showing 73% probability of a price breakout above current resistance levels. Social sentiment has turned bullish with 340% increase in positive mentions.";
+    }
+    
+    // Explain/simplify requests
+    if (lower.includes('explain') || lower.includes('simple') || lower.includes('eli5')) {
+      return "Let me break this down simply: When whales (big investors) move their crypto off exchanges, it usually means they're planning to hold for longer. This reduces selling pressure and often leads to price increases.";
+    }
+    
+    // Avalanche specific
+    if (lower.includes('avalanche') || lower.includes('avax') || lower.includes('subnet')) {
+      return "Avalanche ecosystem is showing strong activity with subnet deployments increasing 45% this week. Major DeFi protocols are migrating to custom subnets for better performance and lower fees.";
+    }
+    
+    // Default intelligent response
+    const defaultResponses = [
+      "I can help you analyze that! Could you be more specific about what crypto data you'd like me to examine?",
+      "Interesting question! I can provide insights on whale movements, market trends, or wallet analysis. What would you like to focus on?",
+      "Based on current market conditions, I can help you understand on-chain patterns and price movements. What specific aspect interests you?",
+      "I'm analyzing real-time crypto data. Could you specify if you want whale tracking, price analysis, or risk assessment?"
     ];
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
   };
   
   const handleQuickPrompt = useCallback((prompt: string, intent: string) => {
