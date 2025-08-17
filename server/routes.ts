@@ -291,6 +291,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // OpenAI Chat endpoint for AI Assistant
+  app.post("/api/ai/chat", express.json(), async (req, res) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    try {
+      const { message } = req.body;
+
+      if (!message) {
+        return res.status(400).json({ error: 'Message is required' });
+      }
+
+      // Import OpenAI here to avoid issues
+      const { default: OpenAI } = await import('openai');
+      
+      const openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are a crypto analyst AI assistant specializing in whale tracking, market analysis, and blockchain intelligence. You provide insights on:
+
+- Whale wallet movements and patterns
+- Market sentiment and price predictions
+- Risk assessment for wallets and transactions
+- DeFi protocol analysis
+- Cross-chain activity monitoring
+- Real-time on-chain data interpretation
+
+Always provide specific, actionable insights with confidence levels when possible. Use cryptocurrency terminology naturally and focus on data-driven analysis. If asked about specific timeframes, addresses, or amounts, provide realistic examples that match the context.
+
+Keep responses concise but informative, typically 1-3 sentences unless more detail is specifically requested.`
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+      });
+
+      const response = completion.choices[0]?.message?.content || "I apologize, but I'm unable to process your request at the moment. Please try again.";
+      
+      res.json({ 
+        response,
+        confidence: Math.floor(Math.random() * 30) + 70 // Random confidence between 70-100%
+      });
+
+    } catch (error: any) {
+      console.error('OpenAI API error:', error);
+      
+      // Fallback response if OpenAI fails
+      res.json({ 
+        response: "I'm currently experiencing connectivity issues. However, I can still help you analyze crypto data. What specific information are you looking for?",
+        confidence: 65,
+        fallback: true
+      });
+    }
+  });
+
   // Smart Notifications routes
   app.post("/api/notifications/smart/check", async (req, res) => {
     try {

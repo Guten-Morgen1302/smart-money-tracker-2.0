@@ -579,23 +579,51 @@ export default function AIAssistant() {
       setActiveWidget(intent);
     }
     
-    // Simulate thinking delay
-    const thinkingDelay = Math.random() * 600 + 900; // 900-1500ms
-    
-    setTimeout(() => {
+    try {
+      // Call OpenAI API
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: content }),
+      });
+      
+      const data = await response.json();
+      
+      // Remove thinking message and add AI response
       setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
       
       const aiMessage: Message = {
         id: Date.now().toString() + "_ai",
         type: "ai",
-        content: generateAIResponse(content),
+        content: data.response || "I apologize, but I'm unable to process your request at the moment.",
         timestamp: new Date(),
-        confidence: Math.floor(Math.random() * 30) + 70,
+        confidence: data.confidence || 75,
         isStreaming: true,
       };
       
       setMessages(prev => [...prev, aiMessage]);
-    }, thinkingDelay);
+      
+    } catch (error) {
+      console.error('Error calling AI API:', error);
+      
+      // Fallback to local response if API fails
+      setTimeout(() => {
+        setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
+        
+        const aiMessage: Message = {
+          id: Date.now().toString() + "_ai",
+          type: "ai",
+          content: generateAIResponse(content),
+          timestamp: new Date(),
+          confidence: Math.floor(Math.random() * 30) + 70,
+          isStreaming: true,
+        };
+        
+        setMessages(prev => [...prev, aiMessage]);
+      }, 1000);
+    }
   }, [detectIntent]);
   
   const generateAIResponse = (prompt: string): string => {
