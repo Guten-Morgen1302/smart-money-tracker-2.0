@@ -601,8 +601,8 @@ export default function AIAssistant() {
   const generateAIResponse = (prompt: string): string => {
     const lower = prompt.toLowerCase().trim();
     
-    // Basic greetings
-    if (lower === "hi" || lower === "hello" || lower === "hey") {
+    // Basic greetings - more flexible matching
+    if (lower.match(/^(hi+|hey+|hello|sup|what's up|yo)$/)) {
       return "Hi there! I'm your AI crypto analyst. I can help you track whale movements, analyze market trends, check wallet risk scores, and provide real-time crypto insights. What would you like to know?";
     }
     
