@@ -66,7 +66,7 @@ The platform focuses on analyzing **smart money movements** — large wallet and
 ## 🛠️ Technology Stack
 **Frontend:** React 18 (TS), Tailwind, Framer Motion, Recharts, React Query  
 **Backend:** Express.js (TS), Drizzle ORM + PostgreSQL, Passport.js, Bcrypt, Zod  
-**AI:** OpenAI API + fallback AI agent, sentiment NLP, predictive modeling  
+**AI:** OpenAI API , sentiment NLP, predictive modeling  
 **Blockchain Data:** Etherscan, Moralis  
 **Infra:** WebSockets, Secure Cookies, CORS, Rate limiting  
 
