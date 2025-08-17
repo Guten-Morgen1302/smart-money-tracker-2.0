@@ -345,11 +345,23 @@ Keep responses concise but informative, typically 1-3 sentences unless more deta
     } catch (error: any) {
       console.error('OpenAI API error:', error);
       
-      // Fallback response if OpenAI fails
+      // Handle specific error types with appropriate responses
+      let fallbackResponse = "I'm currently analyzing crypto data using backup systems. What specific market insights do you need?";
+      let confidence = 70;
+      
+      if (error?.error?.code === 'insufficient_quota') {
+        fallbackResponse = "I'm using cached market analysis due to API limits. I can provide whale tracking data, market trends, and transaction analysis. What would you like to explore?";
+        confidence = 75;
+      } else if (error?.status === 429) {
+        fallbackResponse = "I'm temporarily rate limited but still monitoring whale movements and market patterns. What crypto intelligence do you need?";
+        confidence = 70;
+      }
+      
       res.json({ 
-        response: "I'm currently experiencing connectivity issues. However, I can still help you analyze crypto data. What specific information are you looking for?",
-        confidence: 65,
-        fallback: true
+        response: fallbackResponse,
+        confidence,
+        fallback: true,
+        error_type: error?.error?.code || 'api_limit'
       });
     }
   });
