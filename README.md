@@ -79,7 +79,7 @@ The platform focuses on analyzing **smart money movements** — large wallet and
 ---
 
 ## 📊 Performance Metrics
-- ✅ **Prediction Accuracy:** 89%  
+- ✅ **Prediction Accuracy:** 89%-95%  
 - ⚡ **Whale Alerts Latency:** <500ms  
 - 🔄 **Throughput:** 1000+ transactions/minute  
 - 🎨 **UI Responsiveness:** 60fps animations  
