@@ -1,205 +1,798 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useState, useRef, useCallback } from "react";
+import Sidebar from "@/components/sidebar";
+import Header from "@/components/header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiRequest } from '@/lib/queryClient';
-import Header from '@/components/header';
-import { useToast } from '@/hooks/use-toast';
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Copy, Pin, StopCircle, Paperclip, TrendingUp, AlertTriangle, Zap } from "lucide-react";
 
+// Types
 type Message = {
-  role: 'user' | 'assistant';
+  id: string;
+  type: "user" | "ai" | "thinking";
   content: string;
   timestamp: Date;
+  confidence?: number;
+  isStreaming?: boolean;
+  isStopped?: boolean;
 };
 
-export default function AIAssistant() {
-  const [query, setQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: 'Hello! I\'m your Smart Money Tracker AI assistant. I can help you analyze cryptocurrency trends, wallet information, and market insights. How can I assist you today?',
-      timestamp: new Date()
-    }
-  ]);
-  
-  const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!query.trim()) return;
-    
-    // Add user message to chat
-    const userMessage: Message = {
-      role: 'user',
-      content: query,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-    
-    try {
-      // Send query to AI agent API
-      const response = await fetch('/api/ai/query', {
-        method: 'POST',
-        body: JSON.stringify({ query }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
+type ContextWidget = "price" | "whale" | "alerts" | "subnet" | null;
 
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error('Invalid JSON response from server');
-      }
-      
-      // Add AI response to chat
-      if (data && data.choices && data.choices[0]) {
-        const aiMessage: Message = {
-          role: 'assistant',
-          content: data.choices[0].message.content,
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, aiMessage]);
-      } else {
-        toast({
-          title: "Error",
-          description: "Received an invalid response from the AI agent",
-          variant: "destructive"
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to get response from AI agent",
-        variant: "destructive"
-      });
-      
-      // Add error message to chat
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: "I'm sorry, I encountered an error processing your request. Please try again.",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-      setQuery('');
-    }
-  };
-  
-  // Format timestamp
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+type Chain = "all" | "eth" | "avax" | "subnets";
+
+// Animated Background Orbs
+function BackgroundOrbs() {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          key={i}
+          className={`absolute rounded-full opacity-20 blur-3xl ${
+            i % 4 === 0 ? 'bg-gradient-to-r from-indigo-500 to-purple-600' :
+            i % 4 === 1 ? 'bg-gradient-to-r from-purple-500 to-teal-500' :
+            i % 4 === 2 ? 'bg-gradient-to-r from-teal-400 to-green-500' :
+            'bg-gradient-to-r from-green-400 to-indigo-500'
+          }`}
+          style={{
+            width: `${200 + i * 50}px`,
+            height: `${200 + i * 50}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+          }}
+          animate={{
+            x: [0, 100, -50, 0],
+            y: [0, -100, 50, 0],
+            scale: [1, 1.2, 0.8, 1],
+          }}
+          transition={{
+            duration: 20 + i * 5,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Thinking Animation Component
+function ThinkingMessage() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      className="flex items-start space-x-3 mb-4"
+    >
+      <motion.div
+        className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center"
+        animate={{ 
+          boxShadow: [
+            "0 0 20px rgba(6, 182, 212, 0.5)",
+            "0 0 30px rgba(168, 85, 247, 0.7)",
+            "0 0 20px rgba(6, 182, 212, 0.5)"
+          ]
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        🤖
+      </motion.div>
+      <div className="flex-1">
+        <motion.div
+          className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl rounded-tl-sm p-4 shadow-lg"
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          whileHover={{ 
+            rotateX: 2, 
+            rotateY: -2,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+          }}
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          <div className="flex items-center space-x-2 mb-2">
+            <span className="text-cyan-400 font-medium">Thinking</span>
+            <motion.div className="flex space-x-1">
+              {[0, 1, 2].map(i => (
+                <motion.div
+                  key={i}
+                  className="w-2 h-2 bg-cyan-400 rounded-full"
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ 
+                    duration: 0.8, 
+                    repeat: Infinity, 
+                    delay: i * 0.2 
+                  }}
+                />
+              ))}
+            </motion.div>
+          </div>
+          <p className="text-sm text-gray-300">
+            Analyzing on-chain, social & price signals...
+          </p>
+          <motion.div
+            className="mt-3 h-1 bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 rounded-full"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: [0, 0.7, 0.3, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Confidence Ring Component
+function ConfidenceRing({ confidence }: { confidence: number }) {
+  const circumference = 2 * Math.PI * 18;
+  const strokeDasharray = circumference;
+  const strokeDashoffset = circumference - (confidence / 100) * circumference;
   
   return (
-    <div className="pt-16 pb-4 px-4 h-screen flex flex-col">
+    <div className="relative w-10 h-10">
+      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 40 40">
+        <circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="2"
+        />
+        <motion.circle
+          cx="20"
+          cy="20"
+          r="18"
+          fill="none"
+          stroke={confidence >= 80 ? "#10b981" : confidence >= 60 ? "#f59e0b" : "#ef4444"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeDasharray={strokeDasharray}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-xs font-medium">
+        {confidence}
+      </span>
+    </div>
+  );
+}
+
+// Chat Message Component
+function ChatMessage({ 
+  message, 
+  onCopy, 
+  onPin, 
+  onStop 
+}: { 
+  message: Message;
+  onCopy: (content: string) => void;
+  onPin: (content: string) => void;
+  onStop: (id: string) => void;
+}) {
+  const isUser = message.type === "user";
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(message.isStreaming || false);
+
+  // Typewriter effect for AI messages
+  useEffect(() => {
+    if (message.type === "ai" && message.isStreaming) {
+      setIsTyping(true);
+      let currentIndex = 0;
+      const content = message.content;
+      
+      const typeTimer = setInterval(() => {
+        if (currentIndex < content.length) {
+          setDisplayText(content.slice(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          setIsTyping(false);
+          clearInterval(typeTimer);
+        }
+      }, 60);
+      
+      return () => clearInterval(typeTimer);
+    } else {
+      setDisplayText(message.content);
+    }
+  }, [message.content, message.isStreaming, message.type]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={`flex items-start space-x-3 mb-4 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}
+      data-testid={`message-${message.id}`}
+    >
+      {!isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 flex items-center justify-center">
+          🤖
+        </div>
+      )}
+      
+      <div className={`flex-1 max-w-[80%] ${isUser ? 'flex justify-end' : ''}`}>
+        <motion.div
+          className={`relative backdrop-blur-md border rounded-2xl p-4 shadow-lg ${
+            isUser 
+              ? 'bg-gradient-to-r from-cyan-500/20 to-purple-600/20 border-cyan-400/30 rounded-tr-sm'
+              : 'bg-white/10 border-white/20 rounded-tl-sm'
+          }`}
+          whileHover={{ 
+            rotateX: isUser ? -2 : 2, 
+            rotateY: isUser ? 2 : -2,
+            boxShadow: "0 20px 40px rgba(0,0,0,0.3)"
+          }}
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {/* Streaming progress bar */}
+          {isTyping && (
+            <motion.div
+              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-t-2xl"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: [0, 0.7, 0.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          )}
+          
+          <div className="flex items-start justify-between">
+            <p className="text-sm text-white flex-1 leading-relaxed">
+              {displayText}
+              {isTyping && (
+                <motion.span
+                  className="inline-block w-2 h-4 bg-cyan-400 ml-1"
+                  animate={{ opacity: [1, 0] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                />
+              )}
+            </p>
+            
+            {!isUser && message.confidence && (
+              <div className="ml-3">
+                <ConfidenceRing confidence={message.confidence} />
+              </div>
+            )}
+          </div>
+          
+          {/* Action buttons for AI messages */}
+          {!isUser && (
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+              <div className="flex space-x-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs hover:bg-white/10"
+                  onClick={() => onCopy(message.content)}
+                  data-testid="button-copy"
+                >
+                  <Copy className="w-3 h-3 mr-1" />
+                  Copy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-2 text-xs hover:bg-white/10"
+                  onClick={() => onPin(message.content)}
+                  data-testid="button-pin"
+                >
+                  <Pin className="w-3 h-3 mr-1" />
+                  Pin
+                </Button>
+                {isTyping && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs hover:bg-red-500/20 text-red-400"
+                    onClick={() => onStop(message.id)}
+                    data-testid="button-stop"
+                  >
+                    <StopCircle className="w-3 h-3 mr-1" />
+                    Stop
+                  </Button>
+                )}
+              </div>
+              
+              {message.isStopped && (
+                <span className="text-xs text-red-400 bg-red-500/20 px-2 py-1 rounded">
+                  Stopped
+                </span>
+              )}
+            </div>
+          )}
+        </motion.div>
+      </div>
+      
+      {isUser && (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center">
+          👤
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+// Price Widget Component
+function PriceWidget({ symbol = "BTC" }: { symbol?: string }) {
+  const [price, setPrice] = useState(43250);
+  const [change, setChange] = useState(2.34);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium">{symbol}/USD</span>
+        <TrendingUp className="w-4 h-4 text-green-400" />
+      </div>
+      <div className="space-y-1">
+        <div className="text-xl font-orbitron font-bold">
+          ${price.toLocaleString()}
+        </div>
+        <div className={`text-sm ${change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {change >= 0 ? '+' : ''}{change}% (24h)
+        </div>
+        <div className="w-full h-8 mt-2">
+          <svg viewBox="0 0 100 30" className="w-full h-full">
+            <motion.path
+              d="M0,25 Q25,15 50,20 T100,10"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="1.5"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 2 }}
+            />
+          </svg>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// Whale Leaderboard Widget
+function WhaleWidget() {
+  const whales = [
+    { addr: "0x3f5...7aE2", move: "+$45M BTC", time: "2h ago" },
+    { addr: "0x742...9B4f", move: "-$23M ETH", time: "4h ago" },
+    { addr: "0x1a9...3D1e", move: "+$67M USDC", time: "6h ago" },
+  ];
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">Whale Moves</span>
+        <span className="text-xs text-gray-400">Live</span>
+      </div>
+      <div className="space-y-2">
+        {whales.map((whale, index) => (
+          <motion.div
+            key={whale.addr}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: index * 0.1 }}
+            className="flex items-center justify-between text-xs"
+          >
+            <span className="font-mono text-gray-300">{whale.addr}</span>
+            <div className="text-right">
+              <div className={whale.move.startsWith('+') ? 'text-green-400' : 'text-red-400'}>
+                {whale.move}
+              </div>
+              <div className="text-gray-400">{whale.time}</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Alerts Widget
+function AlertsWidget() {
+  const [alerts, setAlerts] = useState([
+    { id: 1, name: "BTC > $45K", active: true },
+    { id: 2, name: "ETH Whale Alert", active: false },
+    { id: 3, name: "DeFi TVL Drop", active: true },
+  ]);
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">Active Alerts</span>
+        <AlertTriangle className="w-4 h-4 text-yellow-400" />
+      </div>
+      <div className="space-y-2">
+        {alerts.map((alert) => (
+          <div key={alert.id} className="flex items-center justify-between">
+            <span className="text-xs text-gray-300">{alert.name}</span>
+            <motion.button
+              className={`w-8 h-4 rounded-full border ${
+                alert.active ? 'bg-green-400 border-green-400' : 'bg-gray-600 border-gray-600'
+              }`}
+              onClick={() => setAlerts(prev => 
+                prev.map(a => a.id === alert.id ? { ...a, active: !a.active } : a)
+              )}
+              whileTap={{ scale: 0.95 }}
+              data-testid={`toggle-alert-${alert.id}`}
+            >
+              <motion.div
+                className="w-3 h-3 bg-white rounded-full"
+                animate={{ x: alert.active ? 4 : 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            </motion.button>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// Subnet Heatmap Widget (for Avalanche)
+function SubnetWidget() {
+  const subnets = [
+    { name: "DeFi Kings", wallets: 1250, tx: 4500, size: "large" },
+    { name: "GameFi Hub", wallets: 890, tx: 2300, size: "medium" },
+    { name: "Social Layer", wallets: 450, tx: 1200, size: "small" },
+  ];
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-medium">Subnet Activity</span>
+        <span className="text-xs text-red-400">🔺 AVAX</span>
+      </div>
+      <div className="space-y-2">
+        {subnets.map((subnet, index) => (
+          <motion.div
+            key={subnet.name}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: index * 0.1 }}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center space-x-2">
+              <div 
+                className={`rounded-full bg-gradient-to-r from-red-400 to-orange-500 ${
+                  subnet.size === 'large' ? 'w-4 h-4' : subnet.size === 'medium' ? 'w-3 h-3' : 'w-2 h-2'
+                }`}
+              />
+              <span className="text-xs">{subnet.name}</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              {subnet.wallets} wallets
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// System Messages Carousel
+function SystemMessages() {
+  const messages = [
+    "Your AI Whale Tracker 🐋",
+    "Stay Ahead of Smart Money 💸",
+    "Predict. Protect. Profit.",
+  ];
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % messages.length);
+    }, 4000);
+    
+    return () => clearInterval(interval);
+  }, [messages.length]);
+  
+  return (
+    <div className="text-center mb-6">
+      <AnimatePresence mode="wait">
+        <motion.h2
+          key={currentIndex}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.5 }}
+          className="text-lg font-orbitron bg-gradient-to-r from-cyan-400 via-purple-500 to-green-400 bg-clip-text text-transparent"
+        >
+          {messages[currentIndex]}
+        </motion.h2>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function AIAssistant() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const [activeWidget, setActiveWidget] = useState<ContextWidget>("price");
+  const [selectedChain, setSelectedChain] = useState<Chain>("all");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const quickPrompts = [
+    { text: "Top Whale Moves", intent: "whale" },
+    { text: "Wallet Risk Check", intent: "wallet" },
+    { text: "AI Market Prediction", intent: "price" },
+    { text: "Explain in Simple Words", intent: "explain" },
+    { text: "🔺 Avalanche Whale Inflows", intent: "avax" },
+  ];
+  
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+  
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+  
+  // Intent detection
+  const detectIntent = useCallback((text: string): ContextWidget => {
+    const lower = text.toLowerCase();
+    if (lower.includes('price') || lower.includes('btc') || lower.includes('eth')) return 'price';
+    if (lower.includes('whale') || lower.includes('top wallet')) return 'whale';
+    if (lower.includes('alert') || lower.includes('notify')) return 'alerts';
+    if (lower.includes('subnet') || lower.includes('avalanche') || lower.includes('avax')) return 'subnet';
+    return null;
+  }, []);
+  
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim()) return;
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: "user",
+      content,
+      timestamp: new Date(),
+    };
+    
+    const thinkingMessage: Message = {
+      id: Date.now().toString() + "_thinking",
+      type: "thinking",
+      content: "",
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage, thinkingMessage]);
+    setInputValue("");
+    
+    // Detect intent and update widget
+    const intent = detectIntent(content);
+    if (intent) {
+      setActiveWidget(intent);
+    }
+    
+    // Simulate thinking delay
+    const thinkingDelay = Math.random() * 600 + 900; // 900-1500ms
+    
+    setTimeout(() => {
+      setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
+      
+      const aiMessage: Message = {
+        id: Date.now().toString() + "_ai",
+        type: "ai",
+        content: generateAIResponse(content),
+        timestamp: new Date(),
+        confidence: Math.floor(Math.random() * 30) + 70,
+        isStreaming: true,
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    }, thinkingDelay);
+  }, [detectIntent]);
+  
+  const generateAIResponse = (prompt: string): string => {
+    const responses = [
+      "Based on current on-chain analysis, I'm seeing significant whale accumulation patterns in BTC addresses over $10M. The data suggests potential upward price pressure in the next 24-48 hours with 87% confidence.",
+      "The wallet you're asking about shows moderate risk indicators. Transaction patterns suggest legitimate DeFi activity with some exposure to high-risk protocols. Risk score: Medium (6.2/10).",
+      "Top whale movements in the last 6 hours include major BTC outflows from exchanges totaling $245M. This typically indicates institutional accumulation and could signal bullish sentiment.",
+      "Market prediction models are showing 73% probability of a price breakout above current resistance levels. Social sentiment has turned bullish with 340% increase in positive mentions.",
+      "Let me break this down simply: When whales (big investors) move their crypto off exchanges, it usually means they're planning to hold for longer. This reduces selling pressure and often leads to price increases."
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+  
+  const handleQuickPrompt = useCallback((prompt: string, intent: string) => {
+    setInputValue(prompt);
+    sendMessage(prompt);
+  }, [sendMessage]);
+  
+  const handleCopy = useCallback((content: string) => {
+    navigator.clipboard.writeText(content);
+  }, []);
+  
+  const handlePin = useCallback((content: string) => {
+    // Implement pin functionality
+    console.log("Pinned:", content);
+  }, []);
+  
+  const handleStop = useCallback((messageId: string) => {
+    setMessages(prev => prev.map(m => 
+      m.id === messageId ? { ...m, isStreaming: false, isStopped: true } : m
+    ));
+  }, []);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendMessage(inputValue);
+  };
+  
+  const chains = [
+    { id: "all" as Chain, name: "All", color: "bg-gray-500" },
+    { id: "eth" as Chain, name: "ETH", color: "bg-blue-500" },
+    { id: "avax" as Chain, name: "AVAX", color: "bg-red-500" },
+    { id: "subnets" as Chain, name: "Subnets", color: "bg-orange-500" },
+  ];
+  
+  return (
+    <div className="font-inter text-white bg-background min-h-screen relative">
+      <BackgroundOrbs />
+      <Sidebar />
       <Header title="AI" highlight="Assistant" />
       
-      <div className="flex-1 overflow-hidden flex flex-col mb-4">
-        <div className="mb-4">
-          <Button 
-            onClick={() => window.history.back()} 
-            variant="outline"
-            className="border-cyan-400/30 text-white hover:bg-white/5"
-          >
-            <i className="ri-arrow-left-line mr-2"></i>
-            Back to Dashboard
-          </Button>
-        </div>
-        
-        <Card className="flex-1 bg-[#0A0A12] border-white/5 flex flex-col overflow-hidden">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <div className="w-8 h-8 rounded-full bg-cyan-400/20 flex items-center justify-center">
-                <i className="ri-robot-line text-cyan-400"></i>
-              </div>
-              Crypto Intelligence Agent
-            </CardTitle>
-            <CardDescription>
-              Ask questions about crypto markets, wallets, and transactions
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div 
-                  key={index} 
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div 
-                    className={`max-w-[80%] lg:max-w-[70%] rounded-xl px-4 py-2 ${
-                      message.role === 'user' 
-                        ? 'bg-gradient-to-r from-purple-500/30 to-cyan-500/30 border border-cyan-500/20 text-white' 
-                        : 'bg-[#111122] border border-gray-700/30 text-gray-100'
-                    }`}
+      <main className="pl-16 lg:pl-64 pt-16 relative z-10">
+        <div className="container mx-auto p-6 pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
+            {/* Chat Pane - Left 65% */}
+            <div className="lg:col-span-2 flex flex-col">
+              <SystemMessages />
+              
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2" style={{ scrollBehavior: 'smooth' }}>
+                {messages.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-12"
                   >
-                    <div className="text-xs text-gray-400 pb-1">
-                      {message.role === 'user' ? 'You' : 'AI Assistant'} • {formatTime(message.timestamp)}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                      {quickPrompts.slice(0, 3).map((prompt, index) => (
+                        <motion.button
+                          key={prompt.text}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          onClick={() => handleQuickPrompt(prompt.text, prompt.intent)}
+                          className="p-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300 hover:scale-105"
+                          data-testid={`quick-prompt-${index}`}
+                        >
+                          <div className="text-sm font-medium mb-1">{prompt.text}</div>
+                          <div className="text-xs text-gray-400">Click to start</div>
+                        </motion.button>
+                      ))}
                     </div>
-                    <div className="whitespace-pre-wrap">
-                      {message.content}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </CardContent>
-          
-          <CardFooter className="border-t border-white/5 p-4">
-            <form onSubmit={handleSubmit} className="w-full flex gap-2">
-              <Input
-                placeholder="Ask about market trends, wallet analysis, or transaction insights..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                disabled={isLoading}
-                className="flex-1 bg-[#121225] border-gray-700/50 focus:border-cyan-500/50"
-              />
-              <Button 
-                type="submit" 
-                disabled={isLoading || !query.trim()}
-                className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white"
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 border-2 border-white/10 border-t-white rounded-full animate-spin mr-2"></div>
-                    Processing...
-                  </div>
-                ) : (
-                  <>
-                    <i className="ri-send-plane-line mr-1"></i>
-                    Send
-                  </>
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="text-cyan-400"
+                    >
+                      ↓ Ask me anything about crypto
+                    </motion.div>
+                  </motion.div>
                 )}
-              </Button>
-            </form>
-          </CardFooter>
-        </Card>
-      </div>
-      
-      <div className="text-center text-xs text-gray-500 mt-2">
-        <p>AI powered by OpenServ SDK | Responses are generated in real-time based on available data</p>
-      </div>
+                
+                <AnimatePresence>
+                  {messages.map((message) => (
+                    message.type === "thinking" ? (
+                      <ThinkingMessage key={message.id} />
+                    ) : (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        onCopy={handleCopy}
+                        onPin={handlePin}
+                        onStop={handleStop}
+                      />
+                    )
+                  ))}
+                </AnimatePresence>
+                <div ref={messagesEndRef} />
+              </div>
+              
+              {/* Input Area */}
+              <form onSubmit={handleSubmit} className="flex space-x-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 hover:bg-white/10"
+                  data-testid="button-attach"
+                >
+                  <Paperclip className="w-5 h-5" />
+                </Button>
+                <div className="flex-1 relative">
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Ask about whale movements, market trends, or wallet analysis..."
+                    className="bg-white/10 backdrop-blur-md border-white/20 text-white placeholder-gray-400 pr-12"
+                    data-testid="input-message"
+                  />
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700"
+                    data-testid="button-send"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </form>
+            </div>
+            
+            {/* Context Pane - Right 35% */}
+            <div className="space-y-4">
+              {/* Chain Switcher */}
+              <div className="flex space-x-2">
+                {chains.map((chain) => (
+                  <motion.button
+                    key={chain.id}
+                    onClick={() => setSelectedChain(chain.id)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all duration-300 ${
+                      selectedChain === chain.id
+                        ? 'bg-white/20 border-white/40 text-white'
+                        : 'bg-white/5 border-white/20 text-gray-400 hover:bg-white/10'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    data-testid={`chain-${chain.id}`}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <div className={`w-2 h-2 rounded-full ${chain.color}`} />
+                      <span>{chain.name}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+              
+              {/* Quick Prompts */}
+              <div className="grid grid-cols-2 gap-2">
+                {quickPrompts.map((prompt, index) => (
+                  <motion.button
+                    key={prompt.text}
+                    onClick={() => handleQuickPrompt(prompt.text, prompt.intent)}
+                    className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-xs font-medium hover:bg-white/20 transition-all duration-300"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    data-testid={`prompt-chip-${index}`}
+                  >
+                    {prompt.text}
+                  </motion.button>
+                ))}
+              </div>
+              
+              {/* Context Widgets */}
+              <AnimatePresence mode="wait">
+                {activeWidget === "price" && <PriceWidget key="price" />}
+                {activeWidget === "whale" && <WhaleWidget key="whale" />}
+                {activeWidget === "alerts" && <AlertsWidget key="alerts" />}
+                {activeWidget === "subnet" && selectedChain === "avax" && <SubnetWidget key="subnet" />}
+              </AnimatePresence>
+              
+              {/* Default widget when no specific context */}
+              {!activeWidget && <PriceWidget />}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

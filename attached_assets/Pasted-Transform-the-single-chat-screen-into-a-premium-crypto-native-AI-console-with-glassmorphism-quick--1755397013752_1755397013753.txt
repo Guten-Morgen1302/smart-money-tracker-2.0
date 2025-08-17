@@ -1,0 +1,125 @@
+Transform the single chat screen into a premium, crypto-native AI console with glassmorphism, quick prompts, contextual widgets, and a thinking animation before (and during) replies. Keep current ChatGPT API usage; add UX polish + domain features.
+
+Layout
+
+Left (65%) — Chat Pane
+
+Glass chat bubbles (user right-aligned, AI left-aligned), gradient borders.
+
+Sticky composer with attachment icon (future), input, Send.
+
+Right (35%) — Context Pane
+
+Live Cards auto-swap based on chat context:
+
+Price card (token symbol → price, 24h %, sparkline).
+
+Whale leaderboard (top wallets, short addr, last move).
+
+Alert rules (list + toggle).
+
+Chain switcher pills: All / ETH / AVAX / Subnets (status dot).
+
+Quick Prompts (chips): “Top Whale Moves”, “Wallet Risk Check”, “AI Market Prediction”, “Explain in Simple Words”.
+
+Motion & “Thinking” Behavior
+
+On Send:
+
+Insert a ‘Thinking…’ message placeholder from the AI with:
+
+Animated avatar glow (pulse).
+
+Three bouncing dots (…).
+
+Sub-caption: “Analyzing on-chain, social & price signals…”
+
+Keep it for 900–1500 ms (randomized) before streaming text starts.
+
+Stream reply character-by-character (50–70ms per token feel) with a soft typewriter effect.
+
+When finished, replace dots with a subtle success shimmer on the bubble edge.
+
+While streaming:
+
+Show mini progress bar on bubble top (indeterminate).
+
+Allow Stop button; if clicked, show truncated reply + “Stopped” tag.
+
+Visual System
+
+Dark cyberpunk + glass: bg-white/10, backdrop-blur-md, border-white/20, soft shadow.
+
+Animated gradient orbs in background (indigo→purple→teal→green).
+
+Buttons hover: scale 1.05, border glow, subtle ripple.
+
+Chat bubbles hover: 2° 3D tilt + deeper shadow.
+
+Intelligence Features (hooked to prompts/intents; keep API calls same)
+
+Intent detection (basic keyword/regex on client is fine):
+
+price <symbol> → show Price Card in Context Pane.
+
+wallet <address> → render Wallet Profile: holdings summary, tx volume, risk score (Low/Med/High).
+
+top whales / whale → Whale Leaderboard widget.
+
+set alert / notify → show Create Alert Drawer (rule name, condition, channel). Persist locally if backend not ready.
+
+explain / ELI5 → re-prompt model with “simplify” instruction and show Simplified View toggle on bubble.
+
+AI Confidence Ring on each AI bubble (small radial gauge 0–100).
+
+Copy / Save actions on AI messages (copy, pin to notes).
+
+Avalanche Angle (if chain = AVAX / Subnets)
+
+Context Pane adds Subnet Heatmap mini-card (bubbles sized by wallets/tx in last 24h).
+
+Quick Prompt chip: “🔺 Avalanche Whale Inflows”.
+
+Explorer icons: Snowtrace for tx/hash/address.
+
+System Messages (top of chat)
+
+Rotating taglines every 4s (cross-fade, scale 0.98→1):
+
+“Your AI Whale Tracker 🐋”
+
+“Stay Ahead of Smart Money 💸”
+
+“Predict. Protect. Profit.”
+
+Empty & Error States
+
+First-time view: 3 big Quick Prompts + subtle arrow nudging input.
+
+Rate limit/API error: show friendly toast + auto-retry chip (“Retry with shorter query”).
+
+Network drop: status pill (red → yellow → green) with reconnect spinner.
+
+Accessibility & Perf
+
+Keyboard: Enter to send, Shift+Enter for newline; focus rings visible.
+
+ARIA live region for streaming text (polite).
+
+prefers-reduced-motion: disable typewriter & shimmer, keep instant text.
+
+Lazy-load widgets; cache last reply & widgets per session.
+
+Acceptance Criteria (must pass)
+
+On every user send, a Thinking placeholder appears before any text, with bouncing dots & avatar glow.
+
+Replies stream visibly; Stop button works.
+
+Quick Prompts insert canned queries and trigger the right widgets.
+
+Chain pills filter widgets (AVAX shows Snowtrace links; Subnets show heatmap card).
+
+Confidence Ring renders on AI bubbles.
+
+Page looks premium (glassmorphism, gradient orbs, hover tilt), responsive 360–1440, no layout shift.
