@@ -1,11 +1,11 @@
 # 🚀 Smart Money Tracker AI
-**AI-Powered Crypto Analytics Platform | OpenServ AI Hackathon Submission**
+**AI-Powered Crypto Analytics Platform | Avalanche Hackathon Team1 Submission**
 
 ---
 
 ## 🏆 Competition Entry
 **Category:** AI-Powered Applications  
-**Team:** Smart Money Tracker AI  
+**Team:** Console Log 
 **Submission Date:** 2025  
 
 **Summary:**  
@@ -21,9 +21,10 @@ The platform focuses on analyzing **smart money movements** — large wallet and
 ## 🌟 Key Value Propositions
 - 🐋 **Real-time Whale Tracking** → Monitor large transactions as they happen  
 - ⚡ **AI-Powered Risk Scoring** → Advanced algorithms assess wallet & transaction risk  
-- 📈 **Predictive Market Insights (89% Accuracy)** → AI sentiment + transaction patterns  
+- 📈 **Predictive Market Insights (89%-95% Accuracy)** → AI sentiment + transaction patterns  
 - 📊 **Professional Trading Dashboard** → Consolidated analytics, alerts, and insights  
 - 🎨 **Immersive Cyberpunk UX** → Futuristic, high-engagement trading interface  
+- 🔥 **Keep Up-to-Date:** Live Reddit integration to stay on top of the latest crypto trends  
 
 ---
 
