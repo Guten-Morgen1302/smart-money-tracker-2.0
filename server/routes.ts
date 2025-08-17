@@ -484,8 +484,8 @@ Keep responses concise but informative, typically 1-3 sentences unless more deta
 
 // Advanced wallet analysis generator
 function generateWalletAnalysis(address: string) {
-  // Use address as seed for consistent but different results
-  const seed = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  // Use address + timestamp for different results each time
+  const seed = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + Date.now();
   const random = (min: number, max: number) => min + ((seed * 9301 + 49297) % 233280) / 233280 * (max - min);
   const randomInt = (min: number, max: number) => Math.floor(random(min, max + 1));
   

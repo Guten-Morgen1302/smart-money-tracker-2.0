@@ -83,33 +83,36 @@ export default function WalletInsights() {
     setHasSearched(false);
     setAnalysisData(null);
     
-    try {
-      const response = await fetch('/api/wallets/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ address: searchAddress }),
-      });
-      
-      const data = await response.json();
-      setAnalysisData(data);
-      setHasSearched(true);
-      
-      toast({
-        title: "Wallet Analysis Complete",
-        description: `Successfully analyzed ${searchAddress.substring(0, 10)}...`,
-      });
-    } catch (error) {
-      console.error('Wallet analysis error:', error);
-      toast({
-        title: "Analysis Failed",
-        description: "Unable to analyze wallet. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
+    // Show analyzing animation for 5 seconds
+    setTimeout(async () => {
+      try {
+        const response = await fetch('/api/wallets/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ address: searchAddress }),
+        });
+        
+        const data = await response.json();
+        setAnalysisData(data);
+        setHasSearched(true);
+        
+        toast({
+          title: "Wallet Analysis Complete",
+          description: `Successfully analyzed ${searchAddress.substring(0, 10)}...`,
+        });
+      } catch (error) {
+        console.error('Wallet analysis error:', error);
+        toast({
+          title: "Analysis Failed",
+          description: "Unable to analyze wallet. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSearching(false);
+      }
+    }, 5000); // 5 second delay for analysis animation
   };
 
   const getRiskColor = (score: number) => {
@@ -169,9 +172,87 @@ export default function WalletInsights() {
             </CardContent>
           </Card>
 
+          {/* Analyzing Animation */}
+          <AnimatePresence>
+            {isSearching && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="space-y-6"
+              >
+                <Card className="bg-[#191A2A] border-white/10">
+                  <CardContent className="p-8">
+                    <div className="flex flex-col items-center space-y-6">
+                      <div className="relative">
+                        <motion.div
+                          className="w-20 h-20 border-4 border-cyan-400/20 rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                        >
+                          <motion.div
+                            className="absolute top-0 left-1/2 w-2 h-2 bg-cyan-400 rounded-full -translate-x-1/2"
+                            animate={{ scale: [1, 1.5, 1] }}
+                            transition={{ duration: 1, repeat: Infinity }}
+                          />
+                        </motion.div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <i className="ri-wallet-3-line text-2xl text-cyan-400"></i>
+                        </div>
+                      </div>
+                      
+                      <div className="text-center space-y-2">
+                        <h3 className="font-orbitron text-xl text-cyan-400">Analyzing Wallet</h3>
+                        <motion.p 
+                          className="text-gray-400"
+                          animate={{ opacity: [0.5, 1, 0.5] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          {formatAddress(searchAddress)}
+                        </motion.p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-md">
+                        {[
+                          { icon: "ri-search-eye-line", text: "Scanning blockchain..." },
+                          { icon: "ri-brain-line", text: "AI pattern analysis..." },
+                          { icon: "ri-shield-check-line", text: "Risk assessment..." }
+                        ].map((step, index) => (
+                          <motion.div
+                            key={index}
+                            className="flex flex-col items-center space-y-2 p-3 bg-[#0A0A10]/50 rounded-lg border border-white/5"
+                            initial={{ opacity: 0.3 }}
+                            animate={{ opacity: [0.3, 1, 0.3] }}
+                            transition={{ 
+                              duration: 2, 
+                              repeat: Infinity, 
+                              delay: index * 0.5 
+                            }}
+                          >
+                            <i className={`${step.icon} text-lg text-purple-400`}></i>
+                            <p className="text-xs text-center text-gray-400">{step.text}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                      
+                      <div className="w-full max-w-md bg-[#0A0A10]/50 rounded-lg p-2">
+                        <motion.div
+                          className="h-1 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full"
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 5, ease: "easeInOut" }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Analysis Results */}
           <AnimatePresence>
-            {hasSearched && analysisData && (
+            {hasSearched && analysisData && !isSearching && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
