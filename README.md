@@ -5,7 +5,7 @@
 
 ## 🏆 Competition Entry
 **Category:** AI-Powered Applications  
-**Team:** Console Log 
+**Team:** Console Log  
 **Submission Date:** 2025  
 
 **Summary:**  
